@@ -1,49 +1,39 @@
 @import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap");
 
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --navy-900: #0a0f2e;
-  --navy-800: #111840;
-  --navy-700: #1a2456;
-  --navy-600: #1f2d6b;
-  --navy-500: #2d3f8f;
-  --amber:    #f5a623;
-  --white:    #ffffff;
-  --gray-50:  #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-400: #9ca3af;
-  --gray-600: #4b5563;
-  --gray-800: #1f2937;
-  --red:      #ef4444;
-  --green:    #10b981;
-  --radius:   14px;
-  --shadow:   0 20px 60px rgba(10, 15, 46, 0.18);
-  --trans:    all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --page-bg:        #f0f4f8;
+  --sidebar-bg:     #16192a;
+  --topbar-bg:      #ffffff;
+  --topbar-border:  #e8edf2;
+  --card-bg:        #ffffff;
+  --card-bg-2:      #f8fafc;
+  --card-border:    #e2e8f0;
+  --border:         #e2e8f0;
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #94a3b8;
+  --prog-track:     #f1f5f9;
+  --detail-bg:      #f8fafc;
+  --detail-border:  #f0f4f8;
+  --red:    #ef4444;
+  --green:  #10b981;
 }
 
-html, body, #root {
-  height: 100%;
-  width: 100%;
-}
+html, body, #root { height: 100%; width: 100%; }
 
 body {
   font-family: "Sora", sans-serif;
-  background: var(--gray-50);
-  color: var(--gray-800);
+  background: var(--page-bg);
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
 }
 
-a { text-decoration: none; color: inherit; }
-button { font-family: "Sora", sans-serif; }
-input, textarea, select { font-family: "Sora", sans-serif; }
+a  { text-decoration: none; color: inherit; }
+button, input, textarea, select { font-family: "Sora", sans-serif; }
 
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--gray-100); }
-::-webkit-scrollbar-thumb { background: var(--gray-400); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--navy-500); }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--card-bg-2); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }

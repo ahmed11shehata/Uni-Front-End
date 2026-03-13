@@ -1,0 +1,931 @@
+// src/pages/student/CourseDetailPage.jsx
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import styles from "./CourseDetailPage.module.css";
+
+/* ── API Layer (uncomment when backend ready) ──────────────────
+import axios from "axios";
+const BASE_URL = "http://localhost:8000/api";
+export const fetchCourseDetail = async (courseId, token) =>
+  (await axios.get(`${BASE_URL}/student/courses/${courseId}`,
+    { headers: { Authorization: `Bearer ${token}` } })).data;
+export const submitAssignment = async (id, fd, token) =>
+  axios.post(`${BASE_URL}/student/assignments/${id}/submit`, fd,
+    { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" } });
+*/
+
+/* ══════════════════════════════════════════════════
+   MOCK DATABASE
+══════════════════════════════════════════════════ */
+const COURSE_DB = {
+  1: {
+    meta:{ id:1, code:"CS401", name:"Artificial Intelligence", instructor:"Dr. Mohamed Farouk",
+           level:3, credits:3, semester:"Spring 2025", color:"#e8a838", shade:"#7a4a00",
+           light:"#fff8ed", progress:72,
+           description:"Search algorithms, knowledge representation, machine learning and neural networks." },
+    lectures:[
+      {id:1,title:"Introduction to AI & History",  week:1,duration:"52 min",date:"Feb 10",type:"video",watched:true, size:"320 MB"},
+      {id:2,title:"Search Algorithms & Heuristics",week:2,duration:"48 min",date:"Feb 17",type:"video",watched:true, size:"290 MB"},
+      {id:3,title:"Knowledge Representation",      week:3,duration:"55 min",date:"Feb 24",type:"pdf",  watched:true, size:"4.2 MB"},
+      {id:4,title:"Machine Learning Fundamentals", week:4,duration:"61 min",date:"Mar 3", type:"video",watched:false,size:"380 MB"},
+      {id:5,title:"Neural Networks Architecture",  week:5,duration:"58 min",date:"Mar 10",type:"video",watched:false,size:"350 MB"},
+      {id:6,title:"Deep Learning & CNNs",          week:6,duration:"63 min",date:"Mar 17",type:"pdf",  watched:false,size:"6.1 MB"},
+    ],
+    assignments:[
+      {id:1,title:"Search Algorithm Implementation",deadline:"Feb 28",status:"graded",  grade:18,max:20,file:"ahmed_search.pdf",  types:["pdf","zip"]},
+      {id:2,title:"Knowledge Base Design",          deadline:"Mar 14",status:"graded",  grade:16,max:20,file:"knowledge_base.pdf",types:["pdf"]},
+      {id:3,title:"Neural Network from Scratch",    deadline:"Apr 1", status:"pending", grade:null,max:20,file:null,              types:["pdf","zip","py"]},
+      {id:4,title:"Final AI Project",               deadline:"May 10",status:"upcoming",grade:null,max:30,file:null,              types:["pdf","zip"]},
+    ],
+    quizzes:[
+      {id:1,title:"Quiz 1 — Search Algorithms",date:"Feb 20",duration:"20 min",status:"completed",score:9,   max:10,questions:10},
+      {id:2,title:"Quiz 2 — Knowledge Repr.",  date:"Mar 6", duration:"20 min",status:"completed",score:8,   max:10,questions:10},
+      {id:3,title:"Quiz 3 — ML Fundamentals", date:"Mar 20",duration:"20 min",status:"available",score:null,max:10,questions:10},
+      {id:4,title:"Quiz 4 — Neural Networks", date:"Apr 3", duration:"20 min",status:"upcoming", score:null,max:10,questions:10},
+    ],
+  },
+  2: {
+    meta:{ id:2, code:"CS402", name:"Compiler Theory & Design", instructor:"Dr. Heba Nasser",
+           level:3, credits:3, semester:"Spring 2025", color:"#7c6fc4", shade:"#2d1d8a",
+           light:"#f5f3ff", progress:100,
+           description:"Lexical analysis, parsing, semantic analysis, code generation and optimization." },
+    lectures:[
+      {id:1,title:"Lexical Analysis & Tokens",  week:1,duration:"50 min",date:"Feb 9", type:"video",watched:true,size:"310 MB"},
+      {id:2,title:"Regular Expressions & DFA",  week:2,duration:"45 min",date:"Feb 16",type:"pdf",  watched:true,size:"3.8 MB"},
+      {id:3,title:"Context-Free Grammars",      week:3,duration:"60 min",date:"Feb 22",type:"video",watched:true,size:"360 MB"},
+      {id:4,title:"Top-Down Parsing LL(1)",     week:4,duration:"58 min",date:"Mar 1", type:"video",watched:true,size:"360 MB"},
+      {id:5,title:"Code Generation Basics",     week:5,duration:"52 min",date:"Mar 8", type:"pdf",  watched:true,size:"3.2 MB"},
+      {id:6,title:"Optimization Strategies",    week:6,duration:"55 min",date:"Mar 15",type:"video",watched:true,size:"340 MB"},
+    ],
+    assignments:[
+      {id:1,title:"Lexer in C++",              deadline:"Feb 26",status:"graded",grade:19,max:20,file:"lexer.zip",      types:["zip","cpp"]},
+      {id:2,title:"LL(1) Parser Design",       deadline:"Mar 12",status:"graded",grade:17,max:20,file:"ll1_parser.pdf",types:["pdf","zip"]},
+      {id:3,title:"LR Parser Implementation", deadline:"Mar 28",status:"graded",grade:18,max:20,file:"lr_parser.zip",  types:["zip","cpp"]},
+    ],
+    quizzes:[
+      {id:1,title:"Quiz 1 — Lexical Analysis",  date:"Feb 18",duration:"15 min",status:"completed",score:10,max:10,questions:8},
+      {id:2,title:"Quiz 2 — Parsing Techniques",date:"Mar 4", duration:"15 min",status:"completed",score:9, max:10,questions:8},
+      {id:3,title:"Quiz 3 — Code Generation",   date:"Mar 18",duration:"15 min",status:"completed",score:8, max:10,questions:8},
+    ],
+  },
+  3: {
+    meta:{ id:3, code:"CS403", name:"Digital Image Processing", instructor:"Dr. Amr Saleh",
+           level:3, credits:3, semester:"Spring 2025", color:"#2e9e8a", shade:"#0a4a3f",
+           light:"#f0fdf9", progress:100,
+           description:"Spatial & frequency domain filtering, segmentation and feature extraction." },
+    lectures:[
+      {id:1,title:"Intro to Image Processing",  week:1,duration:"46 min",date:"Feb 8", type:"pdf",  watched:true,size:"3.2 MB"},
+      {id:2,title:"Spatial Domain Filtering",   week:2,duration:"52 min",date:"Feb 15",type:"video",watched:true,size:"330 MB"},
+      {id:3,title:"Frequency Domain & Fourier", week:3,duration:"57 min",date:"Feb 22",type:"video",watched:true,size:"355 MB"},
+      {id:4,title:"Image Segmentation Methods", week:4,duration:"50 min",date:"Mar 1", type:"pdf",  watched:true,size:"4.5 MB"},
+      {id:5,title:"Morphological Operations",  week:5,duration:"48 min",date:"Mar 8", type:"video",watched:true,size:"300 MB"},
+    ],
+    assignments:[
+      {id:1,title:"Gaussian Blur Implementation",deadline:"Feb 25",status:"graded",grade:18,max:20,file:"blur.py",        types:["py","zip"]},
+      {id:2,title:"Edge Detection Comparison",   deadline:"Mar 10",status:"graded",grade:20,max:20,file:"edge_detect.zip",types:["py","zip","pdf"]},
+      {id:3,title:"Image Segmentation Report",  deadline:"Mar 25",status:"graded",grade:17,max:20,file:"segment.pdf",    types:["pdf"]},
+    ],
+    quizzes:[
+      {id:1,title:"Quiz 1 — Spatial Filtering",date:"Feb 17",duration:"20 min",status:"completed",score:9, max:10,questions:10},
+      {id:2,title:"Quiz 2 — Frequency Domain", date:"Mar 3", duration:"20 min",status:"completed",score:10,max:10,questions:10},
+      {id:3,title:"Quiz 3 — Segmentation",     date:"Mar 17",duration:"20 min",status:"completed",score:8, max:10,questions:10},
+    ],
+  },
+  4: {
+    meta:{ id:4, code:"CS404", name:"Expert Systems", instructor:"Dr. Dina Mahmoud",
+           level:3, credits:3, semester:"Spring 2025", color:"#e05c8a", shade:"#7a1040",
+           light:"#fff0f6", progress:72,
+           description:"Rule-based expert systems, knowledge engineering and inference engines." },
+    lectures:[
+      {id:1,title:"Expert Systems Overview",    week:1,duration:"44 min",date:"Feb 10",type:"pdf",  watched:true, size:"2.9 MB"},
+      {id:2,title:"Knowledge Base Engineering", week:2,duration:"49 min",date:"Feb 17",type:"video",watched:true, size:"305 MB"},
+      {id:3,title:"Inference Engine Design",    week:3,duration:"53 min",date:"Feb 24",type:"video",watched:true, size:"330 MB"},
+      {id:4,title:"Forward & Backward Chaining",week:4,duration:"57 min",date:"Mar 3", type:"pdf",  watched:false,size:"4.7 MB"},
+      {id:5,title:"CLIPS Expert System Shell",  week:5,duration:"61 min",date:"Mar 10",type:"video",watched:false,size:"380 MB"},
+    ],
+    assignments:[
+      {id:1,title:"Medical Diagnosis KB",      deadline:"Mar 5", status:"graded",  grade:17,max:20,file:"medical_kb.clp",types:["clp","zip","pdf"]},
+      {id:2,title:"Knowledge Base Design v2",  deadline:"Mar 20",status:"graded",  grade:15,max:20,file:"kb_v2.pdf",     types:["pdf"]},
+      {id:3,title:"CLIPS Rule System Project", deadline:"Apr 5", status:"pending", grade:null,max:25,file:null,          types:["zip","clp","pdf"]},
+    ],
+    quizzes:[
+      {id:1,title:"Quiz 1 — Knowledge Repr.",   date:"Feb 20",duration:"20 min",status:"completed",score:8,   max:10,questions:10},
+      {id:2,title:"Quiz 2 — Inference Methods", date:"Mar 7", duration:"20 min",status:"available",score:null,max:10,questions:10},
+      {id:3,title:"Quiz 3 — CLIPS Syntax",      date:"Mar 21",duration:"20 min",status:"upcoming", score:null,max:10,questions:10},
+    ],
+  },
+  5: {
+    meta:{ id:5, code:"CS405", name:"Natural Language Databases", instructor:"Dr. Khaled Ibrahim",
+           level:3, credits:3, semester:"Spring 2025", color:"#5b9fb5", shade:"#1a4d60",
+           light:"#f0f8ff", progress:45,
+           description:"NLP fundamentals merged with database querying: NL interfaces and semantic parsing." },
+    lectures:[
+      {id:1,title:"NLP Fundamentals & Tokenization",week:1,duration:"48 min",date:"Feb 9", type:"video",watched:true, size:"300 MB"},
+      {id:2,title:"Part-of-Speech Tagging",         week:2,duration:"52 min",date:"Feb 16",type:"pdf",  watched:true, size:"3.5 MB"},
+      {id:3,title:"NL Interfaces to Databases",     week:3,duration:"55 min",date:"Feb 23",type:"video",watched:false,size:"340 MB"},
+      {id:4,title:"SQL from Natural Language",      week:4,duration:"60 min",date:"Mar 2", type:"video",watched:false,size:"375 MB"},
+    ],
+    assignments:[
+      {id:1,title:"Tokenizer & POS Tagger",   deadline:"Mar 3", status:"graded",  grade:16,max:20,file:"nlp_tagger.py",types:["py","zip"]},
+      {id:2,title:"NL-to-SQL Query System",   deadline:"Mar 18",status:"pending", grade:null,max:20,file:null,         types:["py","zip","pdf"]},
+      {id:3,title:"Semantic Parsing Report",  deadline:"Apr 8", status:"upcoming",grade:null,max:20,file:null,         types:["pdf"]},
+    ],
+    quizzes:[
+      {id:1,title:"Quiz 1 — NLP Basics",    date:"Feb 18",duration:"20 min",status:"completed",score:7,   max:10,questions:10},
+      {id:2,title:"Quiz 2 — POS & Parsing", date:"Mar 4", duration:"20 min",status:"available",score:null,max:10,questions:10},
+      {id:3,title:"Quiz 3 — NL Interfaces", date:"Mar 18",duration:"20 min",status:"upcoming", score:null,max:10,questions:10},
+    ],
+  },
+  6: {
+    meta:{ id:6, code:"CS406", name:"Theory of Operating Systems", instructor:"Dr. Rania Hassan",
+           level:3, credits:3, semester:"Spring 2025", color:"#3d8fe0", shade:"#0d3a72",
+           light:"#eff6ff", progress:88,
+           description:"Process scheduling, memory management, file systems, concurrency and deadlock." },
+    lectures:[
+      {id:1,title:"Process & Thread Management",   week:1,duration:"55 min",date:"Feb 8", type:"video",watched:true, size:"345 MB"},
+      {id:2,title:"CPU Scheduling Algorithms",     week:2,duration:"50 min",date:"Feb 15",type:"pdf",  watched:true, size:"4.0 MB"},
+      {id:3,title:"Memory Management & Paging",   week:3,duration:"58 min",date:"Feb 22",type:"video",watched:true, size:"360 MB"},
+      {id:4,title:"Virtual Memory & Swapping",    week:4,duration:"62 min",date:"Mar 1", type:"video",watched:true, size:"390 MB"},
+      {id:5,title:"File System Internals",        week:5,duration:"54 min",date:"Mar 8", type:"video",watched:true, size:"335 MB"},
+      {id:6,title:"Deadlocks & Synchronization",  week:6,duration:"57 min",date:"Mar 15",type:"pdf",  watched:false,size:"5.5 MB"},
+    ],
+    assignments:[
+      {id:1,title:"Round-Robin Scheduler Sim",   deadline:"Feb 27",status:"graded",  grade:19,max:20,file:"scheduler.c", types:["c","zip"]},
+      {id:2,title:"Page Replacement Algorithm",  deadline:"Mar 13",status:"graded",  grade:18,max:20,file:"page_rep.c",  types:["c","zip","pdf"]},
+      {id:3,title:"File System Implementation", deadline:"Mar 29",status:"graded",  grade:17,max:20,file:"fs_impl.zip", types:["c","zip"]},
+      {id:4,title:"Deadlock Detection Report",  deadline:"Apr 14",status:"pending", grade:null,max:20,file:null,        types:["pdf","zip"]},
+    ],
+    quizzes:[
+      {id:1,title:"Quiz 1 — Scheduling",    date:"Feb 17",duration:"20 min",status:"completed",score:9,   max:10,questions:10},
+      {id:2,title:"Quiz 2 — Memory Mgmt",   date:"Mar 3", duration:"20 min",status:"completed",score:10,  max:10,questions:10},
+      {id:3,title:"Quiz 3 — File Systems",  date:"Mar 17",duration:"20 min",status:"completed",score:8,   max:10,questions:10},
+      {id:4,title:"Quiz 4 — Deadlocks",     date:"Mar 31",duration:"20 min",status:"available",score:null,max:10,questions:10},
+    ],
+  },
+};
+const getDB = (id) => COURSE_DB[parseInt(id)] || COURSE_DB[1];
+
+/* ── Icons ── */
+const IC = {
+  back:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>,
+  video:  <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>,
+  pdf:    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>,
+  dl:     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
+  check:  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>,
+  upload: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>,
+  lock:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>,
+  quiz:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>,
+  file:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>,
+};
+
+/* ── Status config ── */
+const ST = {
+  graded:    { label:"Graded",    bg:"rgba(16,185,129,0.14)",  color:"#10b981", dot:"#10b981" },
+  pending:   { label:"Pending",   bg:"rgba(245,158,11,0.14)",  color:"#f59e0b", dot:"#f59e0b" },
+  upcoming:  { label:"Upcoming",  bg:"rgba(148,163,184,0.14)", color:"#94a3b8", dot:"#94a3b8" },
+  completed: { label:"Done ✓",    bg:"rgba(16,185,129,0.14)",  color:"#10b981", dot:"#10b981" },
+  available: { label:"Open Now",  bg:"rgba(139,92,246,0.14)",  color:"#a78bfa", dot:"#8b5cf6" },
+  submitted: { label:"Submitted", bg:"rgba(59,130,246,0.14)",  color:"#60a5fa", dot:"#3b82f6" },
+};
+function Chip({ status }) {
+  const s = ST[status] || ST.upcoming;
+  return (
+    <span className={styles.chip} style={{ background: s.bg, color: s.color }}>
+      <span className={styles.chipDot} style={{ background: s.dot }}/>
+      {s.label}
+    </span>
+  );
+}
+
+/* ── Typewriter / word reveal title ── */
+function TitleReveal({ text }) {
+  const words = text.split(" ");
+  return (
+    <h1 className={styles.heroTitle}>
+      {words.map((word, i) => (
+        <motion.span key={i} className={styles.revealWord}
+          initial={{ opacity: 0, y: 14, filter: "blur(8px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          transition={{ delay: 0.18 + i * 0.08, duration: 0.38, ease: [0.22, 1, 0.36, 1] }}>
+          {word}{" "}
+        </motion.span>
+      ))}
+    </h1>
+  );
+}
+
+/* ── Progress ring ── */
+function Ring({ pct, size = 96, color }) {
+  const r = (size - 10) / 2, circ = 2 * Math.PI * r;
+  return (
+    <div className={styles.ringWrap} style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="5"/>
+        <motion.circle cx={size/2} cy={size/2} r={r} fill="none"
+          stroke="rgba(255,255,255,0.9)" strokeWidth="5" strokeLinecap="round"
+          strokeDasharray={circ}
+          initial={{ strokeDashoffset: circ }}
+          animate={{ strokeDashoffset: circ * (1 - pct / 100) }}
+          transition={{ delay: 0.5, duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
+          style={{ transform: "rotate(-90deg)", transformOrigin: "center" }}/>
+      </svg>
+      <div className={styles.ringLabel}>
+        <span className={styles.ringNum}>{pct}%</span>
+        <span className={styles.ringText}>done</span>
+      </div>
+    </div>
+  );
+}
+
+/* ── File upload ── */
+function FileUpload({ id, types, color, onDone }) {
+  const [drag, setDrag] = useState(false);
+  const [file, setFile] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  const ref = useRef();
+
+  const submit = async () => {
+    if (!file) return; setBusy(true);
+    // TODO: real upload
+    await new Promise(r => setTimeout(r, 1300));
+    setBusy(false); setDone(true); onDone?.();
+  };
+
+  if (done) return (
+    <motion.div className={styles.uploadOk}
+      initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
+      <div className={styles.uploadOkCircle} style={{ background: color }}>
+        <span style={{ width: 18, height: 18, display: "flex", color: "#fff" }}>{IC.check}</span>
+      </div>
+      <div>
+        <div className={styles.uploadOkTitle}>Submitted successfully!</div>
+        <div className={styles.uploadOkSub}>Your instructor will review it shortly.</div>
+      </div>
+    </motion.div>
+  );
+
+  return (
+    <div className={styles.uploadArea}>
+      <motion.div
+        className={`${styles.dropZone} ${drag ? styles.dropActive : ""}`}
+        style={drag ? { borderColor: color, background: `${color}06` } : {}}
+        onDragOver={e => { e.preventDefault(); setDrag(true); }}
+        onDragLeave={() => setDrag(false)}
+        onDrop={e => { e.preventDefault(); setDrag(false); setFile(e.dataTransfer.files[0]); }}
+        onClick={() => ref.current?.click()}
+        whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+        <input ref={ref} type="file" style={{ display: "none" }}
+          accept={types.map(t => `.${t}`).join(",")}
+          onChange={e => setFile(e.target.files[0])}/>
+        <div className={styles.dropIco} style={{ color }}>
+          {file ? IC.file : IC.upload}
+        </div>
+        {file ? (
+          <div className={styles.fileInfo}>
+            <span className={styles.fileName}>{file.name}</span>
+            <span className={styles.fileSize}>{(file.size / 1048576).toFixed(1)} MB</span>
+          </div>
+        ) : (
+          <>
+            <p className={styles.dropLine}>Drop or <span style={{ color, fontWeight: 700 }}>browse</span></p>
+            <p className={styles.dropHint}>{types.map(t => t.toUpperCase()).join(" · ")}</p>
+          </>
+        )}
+      </motion.div>
+      {file && (
+        <motion.button className={styles.submitBtn}
+          style={{ background: color }}
+          onClick={submit} disabled={busy}
+          initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+          whileHover={{ filter: "brightness(1.1)", scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+          {busy
+            ? <motion.span animate={{ rotate: 360 }} transition={{ duration: 0.7, repeat: Infinity, ease: "linear" }} style={{ display: "inline-block", fontSize: 20 }}>⟳</motion.span>
+            : <><span style={{ width: 15, height: 15, display: "flex" }}>{IC.upload}</span> Submit</>
+          }
+        </motion.button>
+      )}
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   LECTURES TAB
+════════════════════════════════════════ */
+function LecturesTab({ lectures, color, shade }) {
+  const watchedCount = lectures.filter(l => l.watched).length;
+
+  return (
+    <div className={styles.tabBody}>
+      {/* compact progress strip */}
+      <div className={styles.progStrip}>
+        <div className={styles.progInfo}>
+          <span style={{ color, fontWeight: 700 }}>{watchedCount}/{lectures.length}</span>
+          <span className={styles.progLabel}> lectures watched</span>
+        </div>
+        <div className={styles.progTrack}>
+          <motion.div className={styles.progFill}
+            style={{ background: color }}
+            initial={{ width: 0 }}
+            animate={{ width: `${Math.round(watchedCount / lectures.length * 100)}%` }}
+            transition={{ delay: 0.2, duration: 1, ease: "easeOut" }}/>
+        </div>
+      </div>
+
+      {/* Lecture CARD GRID */}
+      <div className={styles.lecGrid}>
+        {lectures.map((lec, i) => (
+          <motion.div key={lec.id}
+            className={`${styles.lecCard} ${lec.watched ? styles.lecWatched : ""}`}
+            initial={{ opacity: 0, y: 20, scale: 0.94 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: i * 0.07, duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+            whileHover={{ y: -5, boxShadow: `0 14px 36px rgba(0,0,0,0.13)` }}>
+
+            {/* Card background with color tint */}
+            <div className={styles.lecCardBg}
+              style={{ background: lec.watched
+                ? `linear-gradient(145deg, ${color}22 0%, ${color}0a 100%)`
+                : "linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%)" }}/>
+
+            {/* Top row: week badge + type pill + watched check */}
+            <div className={styles.lecCardTop}>
+              <span className={styles.weekBadge}
+                style={{ background: lec.watched ? color : "#e2e8f0",
+                         color: lec.watched ? "#fff" : "#94a3b8" }}>
+                W{lec.week}
+              </span>
+              <span className={styles.typePill}
+                style={{ background: lec.type === "video" ? "#dbeafe" : "#fef3c7",
+                         color: lec.type === "video" ? "#1d4ed8" : "#92400e" }}>
+                {lec.type === "video" ? "▶ VIDEO" : "📄 PDF"}
+              </span>
+              {lec.watched && (
+                <span className={styles.checkBadge} style={{ color: "#10b981" }}>
+                  {IC.check}
+                </span>
+              )}
+            </div>
+
+            {/* Title with gradient overlay effect */}
+            <div className={styles.lecTitleWrap}>
+              <div className={styles.lecTitleOverlay}
+                style={{ background: lec.watched
+                  ? `linear-gradient(to top, ${color}18 0%, transparent 100%)`
+                  : "linear-gradient(to top, rgba(0,0,0,0.04) 0%, transparent 100%)" }}/>
+              <h3 className={styles.lecTitle}>{lec.title}</h3>
+            </div>
+
+            {/* Meta row */}
+            <div className={styles.lecMeta}>
+              <span>⏱ {lec.duration}</span>
+              <span className={styles.metaDot}>·</span>
+              <span>{lec.date}</span>
+              <span className={styles.metaDot}>·</span>
+              <span>{lec.size}</span>
+            </div>
+
+            {/* Actions */}
+            <div className={styles.lecCardActions}>
+              <motion.button className={styles.lecDlBtn}
+                whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.9 }}>
+                {IC.dl}
+              </motion.button>
+              <motion.button className={styles.lecMainBtn}
+                style={{ background: color }}
+                whileHover={{ scale: 1.04, filter: "brightness(1.1)" }}
+                whileTap={{ scale: 0.95 }}>
+                <span style={{ width: 11, height: 11, display: "flex" }}>
+                  {lec.type === "video" ? IC.video : IC.pdf}
+                </span>
+                {lec.type === "video" ? "Watch" : "Open"}
+              </motion.button>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   ASSIGNMENTS TAB
+════════════════════════════════════════ */
+function AssignmentsTab({ initialAssignments, color, meta }) {
+  const [list, setList]       = useState(initialAssignments);
+  const [uploadAsn, setUploadAsn] = useState(null);
+
+  const submitted = list.filter(a => ["graded","submitted"].includes(a.status)).length;
+
+  return (
+    <div className={styles.tabBody}>
+      <div className={styles.progStrip}>
+        <div className={styles.progInfo}>
+          <span style={{ color, fontWeight:700 }}>{submitted}/{list.length}</span>
+          <span className={styles.progLabel}> submitted</span>
+        </div>
+        <div className={styles.progTrack}>
+          <motion.div className={styles.progFill} style={{ background:color }}
+            initial={{ width:0 }}
+            animate={{ width:`${Math.round(submitted/list.length*100)}%` }}
+            transition={{ delay:0.2, duration:1, ease:"easeOut" }}/>
+        </div>
+      </div>
+
+      <div className={styles.asnGrid}>
+        {list.map((a, i) => {
+          const pct = a.grade !== null ? Math.round((a.grade/a.max)*100) : null;
+          return (
+            <motion.div key={a.id} className={styles.asnCard2}
+              style={{ borderColor: a.status==="pending" ? `${color}40` : "#e4eaf2" }}
+              initial={{ opacity:0, y:18, scale:0.94 }} animate={{ opacity:1, y:0, scale:1 }}
+              transition={{ delay:i*0.07, duration:0.38, ease:[0.22,1,0.36,1] }}
+              whileHover={{ y:-4, boxShadow:"0 14px 36px rgba(0,0,0,0.11)" }}>
+
+              {a.status==="pending" && (
+                <div className={styles.asnCardBg}
+                  style={{ background:`linear-gradient(145deg,${color}10 0%,${color}04 100%)` }}/>
+              )}
+
+              <div className={styles.asnCard2Top}>
+                <span className={styles.asnCard2Idx} style={{ background:`${color}15`, color }}>
+                  {String(i+1).padStart(2,"0")}
+                </span>
+                <Chip status={a.status}/>
+              </div>
+
+              <div className={styles.asnCard2Title}>{a.title}</div>
+
+              <div className={styles.asnCard2Meta}>
+                <span>📅 {a.deadline}</span>
+                <span>·</span>
+                <span>{a.max} pts</span>
+                {a.file && <><span>·</span><span>📎 {a.file}</span></>}
+              </div>
+
+              <div className={styles.asnCard2Footer}>
+                {pct !== null ? (
+                  <div className={styles.asnGradeDial}
+                    style={{ background:`conic-gradient(${color} ${pct*3.6}deg, #eef2f7 0deg)` }}>
+                    <div className={styles.asnGradeDialIn}>
+                      <span style={{ color, fontSize:15, fontWeight:900 }}>{a.grade}</span>
+                      <span style={{ color:"#94a3b8", fontSize:10 }}>/{a.max}</span>
+                    </div>
+                  </div>
+                ) : a.status==="pending" ? (
+                  <motion.button className={styles.asnSubmitBtn}
+                    style={{ background:color }}
+                    onClick={() => setUploadAsn(a)}
+                    whileHover={{ scale:1.04, filter:"brightness(1.08)" }}
+                    whileTap={{ scale:0.96 }}>
+                    <span style={{ width:13,height:13,display:"flex" }}>{IC.upload}</span>
+                    Submit Assignment
+                  </motion.button>
+                ) : (
+                  <span className={styles.asnCard2Upcoming}>Opens {a.deadline}</span>
+                )}
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      <AnimatePresence>
+        {uploadAsn && (
+          <motion.div className={styles.uploadModal}
+            initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}>
+            <motion.div className={styles.uploadModalBox}
+              initial={{ y:80, opacity:0, scale:0.96 }}
+              animate={{ y:0, opacity:1, scale:1 }}
+              exit={{ y:40, opacity:0, scale:0.97 }}
+              transition={{ duration:0.38, ease:[0.22,1,0.36,1] }}>
+
+              <div className={styles.umHeader} style={{ background:color }}>
+                <div className={styles.umHeaderBg}/>
+                <div className={styles.umHeaderContent}>
+                  <button className={styles.umClose} onClick={() => setUploadAsn(null)}>✕</button>
+                  <div className={styles.umCourseName}>{meta.code} · {meta.name}</div>
+                  <h2 className={styles.umTitle}>{uploadAsn.title}</h2>
+                </div>
+              </div>
+
+              <div className={styles.umDetails}>
+                {[
+                  { icon:"👨‍🏫", label:"Instructor", val:meta.instructor },
+                  { icon:"📅", label:"Deadline",   val:uploadAsn.deadline },
+                  { icon:"⭐", label:"Points",     val:`${uploadAsn.max} pts` },
+                  { icon:"📁", label:"Formats",    val:uploadAsn.types.map(t=>t.toUpperCase()).join(" · ") },
+                ].map((d,i)=>(
+                  <div key={i} className={styles.umDetailItem}>
+                    <span className={styles.umDetailIcon}>{d.icon}</span>
+                    <div>
+                      <div className={styles.umDetailLabel}>{d.label}</div>
+                      <div className={styles.umDetailVal}>{d.val}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className={styles.umBody}>
+                <FileUpload id={uploadAsn.id} types={uploadAsn.types} color={color} large
+                  onDone={() => {
+                    setList(l => l.map(x => x.id===uploadAsn.id ? {...x, status:"submitted"} : x));
+                    setUploadAsn(null);
+                  }}/>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   QUIZZES TAB
+════════════════════════════════════════ */
+function QuizzesTab({ quizzes, color, courseId }) {
+  const navigate = useNavigate();
+  const done = quizzes.filter(q => q.status === "completed").length;
+
+  return (
+    <div className={styles.tabBody}>
+      <div className={styles.progStrip}>
+        <div className={styles.progInfo}>
+          <span style={{ color, fontWeight: 700 }}>{done}/{quizzes.length}</span>
+          <span className={styles.progLabel}> completed</span>
+        </div>
+        <div className={styles.progTrack}>
+          <motion.div className={styles.progFill} style={{ background: color }}
+            initial={{ width: 0 }}
+            animate={{ width: `${Math.round(done / quizzes.length * 100)}%` }}
+            transition={{ delay: 0.2, duration: 1, ease: "easeOut" }}/>
+        </div>
+      </div>
+
+      <div className={styles.quizGrid}>
+        {quizzes.map((q, i) => (
+          <motion.div key={q.id}
+            className={`${styles.quizCard} ${q.status === "available" ? styles.quizOpen : ""}`}
+            style={q.status === "available" ? { borderColor: `${color}50` } : {}}
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.08, duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+            whileHover={{ y: -4, boxShadow: "0 12px 30px rgba(0,0,0,0.1)" }}>
+
+            <div className={styles.quizScoreArea}>
+              {q.score !== null ? (
+                <div className={styles.scoreDial}
+                  style={{ background: `conic-gradient(${color} ${q.score/q.max*360}deg, #eef2f7 0deg)` }}>
+                  <div className={styles.scoreInner}>
+                    <span className={styles.scoreNum} style={{ color }}>{q.score}</span>
+                    <span className={styles.scoreMax}>/{q.max}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className={styles.scorePlaceholder}
+                  style={{ background: q.status === "available" ? `${color}18` : "#f1f5f9",
+                           color: q.status === "available" ? color : "#94a3b8" }}>
+                  <span style={{ width: 22, height: 22, display: "flex" }}>
+                    {q.status === "upcoming" ? IC.lock : IC.quiz}
+                  </span>
+                </div>
+              )}
+              <Chip status={q.status}/>
+            </div>
+
+            <div className={styles.quizTitle}>{q.title}</div>
+            <div className={styles.quizMeta}>
+              <span>📅 {q.date}</span>
+              <span>⏱ {q.duration}</span>
+              <span>❓ {q.questions} questions</span>
+            </div>
+
+            {q.status === "available" && (
+              <motion.button className={styles.startBtn} style={{ background: color }}
+                onClick={() => navigate(`/student/quiz/${courseId}/${q.id}`)}
+                whileHover={{ scale: 1.04, filter: "brightness(1.08)" }}
+                whileTap={{ scale: 0.96 }}>
+                Start Quiz →
+              </motion.button>
+            )}
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+/* ════════════════════════════════════════
+   GRADES TAB
+════════════════════════════════════════ */
+function GradesTab({ quizzes, assignments, color }) {
+  // Compute totals
+  const gradedQuizzes   = quizzes.filter(q => q.score !== null);
+  const quizTotal       = gradedQuizzes.reduce((s, q) => s + q.score, 0);
+  const quizMax         = gradedQuizzes.reduce((s, q) => s + q.max, 0);
+  const gradedAsn       = assignments.filter(a => a.grade !== null);
+  const asnTotal        = gradedAsn.reduce((s, a) => s + a.grade, 0);
+  const asnMax          = gradedAsn.reduce((s, a) => s + a.max, 0);
+
+  function ScoreBar({ val, max, c, delay }) {
+    const pct = max > 0 ? Math.round((val / max) * 100) : 0;
+    return (
+      <div className={styles.gradeBarRow}>
+        <div className={styles.gradeBarTrack}>
+          <motion.div className={styles.gradeBarFill}
+            style={{ background: c }}
+            initial={{ width: 0 }}
+            animate={{ width: `${pct}%` }}
+            transition={{ delay, duration: 0.75, ease: "easeOut" }}/>
+        </div>
+        <span className={styles.gradeBarPct} style={{ color: c }}>{pct}%</span>
+      </div>
+    );
+  }
+
+  function letterFromPct(_pct) { return {}; } // unused — kept for future
+
+  return (
+    <div className={styles.tabBody}>
+
+      {/* ── Summary cards ── */}
+      <div className={styles.gradeSummaryGrid}>
+        {[
+          { label: "Quizzes", earned: quizTotal, max: quizMax, icon: "📝", pending: quizzes.length - gradedQuizzes.length },
+          { label: "Assignments", earned: asnTotal, max: asnMax, icon: "📋", pending: assignments.filter(a=>a.status==="pending").length },
+        ].map((s, i) => {
+          const pct = s.max > 0 ? Math.round((s.earned / s.max) * 100) : 0;
+          return (
+            <motion.div key={i} className={styles.gradeSumCard}
+              style={{ borderColor: `${color}25` }}
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.09 }}>
+              <div className={styles.gradeSumTop}>
+                <span className={styles.gradeSumIcon}>{s.icon}</span>
+                <span className={styles.gradeSumLabel}>{s.label}</span>
+                {s.pending > 0 && (
+                  <span className={styles.pendingPill}>{s.pending} pending</span>
+                )}
+              </div>
+              <div className={styles.gradeSumScore}>
+                <span className={styles.gradeSumEarned} style={{ color }}>
+                  {s.max > 0 ? s.earned : "—"}
+                </span>
+                {s.max > 0 && <span className={styles.gradeSumMax}>/{s.max}</span>}
+              </div>
+              {s.max > 0 && <ScoreBar val={s.earned} max={s.max} c={color} delay={0.15 + i * 0.09}/>}
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* ── Quizzes breakdown ── */}
+      <div className={styles.gradeSection}>
+        <div className={styles.gradeSectionHeader}>
+          <span className={styles.gradeSectionTitle}>📝 Quiz Breakdown</span>
+          <span className={styles.gradeSectionTotal} style={{ color }}>
+            {quizTotal}/{quizMax} pts
+          </span>
+        </div>
+        <div className={styles.gradeItemList}>
+          {quizzes.map((q, i) => {
+            const pct = q.score !== null ? Math.round((q.score / q.max) * 100) : null;
+            const barC = pct === null ? "#cbd5e1" : pct >= 80 ? "#22c55e" : pct >= 60 ? "#f59e0b" : "#ef4444";
+            return (
+              <motion.div key={q.id} className={styles.gradeItem}
+                initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.06 }}>
+                <div className={styles.gradeItemLeft}>
+                  <span className={styles.gradeItemName}>{q.title}</span>
+                  <span className={styles.gradeItemDate}>📅 {q.date}</span>
+                </div>
+                {pct !== null ? (
+                  <>
+                    <div className={styles.gradeItemBar}>
+                      <div className={styles.gradeBarTrack}>
+                        <motion.div className={styles.gradeBarFill}
+                          style={{ background: barC }}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${pct}%` }}
+                          transition={{ delay: 0.1 + i * 0.06, duration: 0.7 }}/>
+                      </div>
+                    </div>
+                    <span className={styles.gradeItemScore} style={{ color: barC }}>
+                      {q.score}/{q.max}
+                    </span>
+                  </>
+                ) : (
+                  <span className={styles.gradeItemNA}>
+                    {q.status === "upcoming" ? "⏳ Upcoming" : "🔓 Available"}
+                  </span>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Assignments breakdown ── */}
+      <div className={styles.gradeSection}>
+        <div className={styles.gradeSectionHeader}>
+          <span className={styles.gradeSectionTitle}>📋 Assignment Grades</span>
+          <span className={styles.gradeSectionTotal} style={{ color }}>
+            {asnTotal}/{asnMax} pts
+          </span>
+        </div>
+        <div className={styles.gradeItemList}>
+          {assignments.map((a, i) => {
+            const pct = a.grade !== null ? Math.round((a.grade / a.max) * 100) : null;
+            const barC = pct === null ? "#cbd5e1" : pct >= 80 ? "#22c55e" : pct >= 60 ? "#f59e0b" : "#ef4444";
+            return (
+              <motion.div key={a.id} className={styles.gradeItem}
+                initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.06 }}>
+                <div className={styles.gradeItemLeft}>
+                  <span className={styles.gradeItemName}>{a.title}</span>
+                  <span className={styles.gradeItemDate}>📅 Due {a.deadline}</span>
+                </div>
+                {pct !== null ? (
+                  <>
+                    <div className={styles.gradeItemBar}>
+                      <div className={styles.gradeBarTrack}>
+                        <motion.div className={styles.gradeBarFill}
+                          style={{ background: barC }}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${pct}%` }}
+                          transition={{ delay: 0.1 + i * 0.06, duration: 0.7 }}/>
+                      </div>
+                    </div>
+                    <span className={styles.gradeItemScore} style={{ color: barC }}>
+                      {a.grade}/{a.max}
+                    </span>
+                  </>
+                ) : (
+                  <span className={styles.gradeItemNA}
+                    style={{ background: a.status === "pending" ? "#fffbeb" : "#f8fafc",
+                             color: a.status === "pending" ? "#d97706" : "#94a3b8" }}>
+                    {a.status === "pending" ? "⏰ Pending" : "🔒 Upcoming"}
+                  </span>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   MAIN PAGE
+════════════════════════════════════════ */
+const TABS = [
+  { key: "lectures",    label: "Lectures",    icon: "🎬" },
+  { key: "assignments", label: "Assignments", icon: "📋" },
+  { key: "quizzes",     label: "Quizzes",     icon: "✏️" },
+  { key: "grades",      label: "Grades",      icon: "📊" },
+];
+
+export default function CourseDetailPage() {
+  const { courseId } = useParams();
+  const navigate = useNavigate();
+  const [data, setData] = useState(null);
+  const [tab, setTab] = useState("lectures");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true); setTab("lectures");
+    // TODO: fetchCourseDetail(courseId, token).then(setData);
+    setTimeout(() => { setData(getDB(courseId)); setLoading(false); }, 280);
+  }, [courseId]);
+
+  if (loading) return (
+    <div className={styles.page}>
+      <div className={styles.heroSkeleton}/>
+    </div>
+  );
+
+  const { meta, lectures, assignments, quizzes } = data;
+  const counts = { lectures: lectures.length, assignments: assignments.length, quizzes: quizzes.length, grades: quizzes.filter(q=>q.score!==null).length + assignments.filter(a=>a.grade!==null).length };
+  const c = meta.color;
+
+  return (
+    <div className={styles.page}>
+
+      {/* ══ HERO CARD ══ */}
+      <div className={styles.heroWrapper}>
+        <motion.div className={styles.heroCard}
+          initial={{ opacity: 0, y: 18, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}>
+
+          {/* Background layers */}
+          <div className={styles.heroCardBg} style={{ background: c }}/>
+          <div className={styles.heroCardMesh}
+            style={{ background: `radial-gradient(ellipse 60% 80% at 90% 10%, ${meta.shade}dd 0%, transparent 55%),
+                                   radial-gradient(ellipse 40% 50% at 5% 90%, rgba(0,0,0,0.22) 0%, transparent 50%)` }}/>
+          {/* Decorative dots pattern */}
+          <div className={styles.heroPattern}/>
+
+          {/* Content */}
+          <div className={styles.heroInner}>
+            <div className={styles.heroTopRow}>
+              <motion.button className={styles.backBtn}
+                onClick={() => navigate("/student/courses")}
+                whileHover={{ x: -3 }} whileTap={{ scale: 0.92 }}>
+                <span style={{ width: 15, height: 15, display: "flex" }}>{IC.back}</span>
+                Courses
+              </motion.button>
+              <Ring pct={meta.progress} size={94} color={c}/>
+            </div>
+
+            <motion.div className={styles.heroInfo}
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.14, duration: 0.44 }}>
+
+              <div className={styles.codeTag}>{meta.code}</div>
+
+              {/* Typewriter title */}
+              <TitleReveal text={meta.name}/>
+
+              <p className={styles.heroDesc}>{meta.description}</p>
+
+              <div className={styles.heroPills}>
+                {[
+                  `👨‍🏫 ${meta.instructor}`,
+                  `🎓 Level ${meta.level}`,
+                  `⭐ ${meta.credits} Credits`,
+                  `📅 ${meta.semester}`,
+                ].map((t, i) => (
+                  <motion.span key={i} className={styles.heroPill}
+                    initial={{ opacity: 0, scale: 0.85 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.28 + i * 0.07 }}>
+                    {t}
+                  </motion.span>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Stats row */}
+            <motion.div className={styles.statsRow}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              transition={{ delay: 0.36 }}>
+              {[
+                { n: lectures.length,                                      l: "Lectures"    },
+                { n: lectures.filter(x => x.watched).length,               l: "Watched"     },
+                { n: assignments.filter(x => x.grade !== null).length,     l: "Graded"      },
+                { n: quizzes.filter(x => x.status === "completed").length, l: "Quizzes Done"},
+              ].map((s, i) => (
+                <div key={i} className={styles.statItem}>
+                  <span className={styles.statNum}>{s.n}</span>
+                  <span className={styles.statLbl}>{s.l}</span>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* ══ TAB BAR ══ */}
+      <div className={styles.tabBar}>
+        {TABS.map(t => (
+          <button key={t.key}
+            className={`${styles.tabBtn} ${tab === t.key ? styles.tabOn : ""}`}
+            onClick={() => setTab(t.key)}>
+            {tab === t.key && (
+              <motion.div className={styles.tabSlider} layoutId="slider"
+                style={{ background: c }}
+                transition={{ type: "spring", stiffness: 420, damping: 35 }}/>
+            )}
+            <span className={styles.tabLabel}>
+              {t.icon} {t.label}
+              <span className={styles.tabBadge}
+                style={tab === t.key ? { background: "rgba(255,255,255,0.28)", color: "#fff" } : {}}>
+                {counts[t.key]}
+              </span>
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* ══ BODY ══ */}
+      <div className={styles.body}>
+        <AnimatePresence mode="wait">
+          <motion.div key={tab}
+            initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
+            {tab === "lectures"    && <LecturesTab    lectures={lectures}               color={c} shade={meta.shade}/>}
+            {tab === "assignments" && <AssignmentsTab initialAssignments={assignments}  color={c} meta={meta}/>}
+            {tab === "quizzes"     && <QuizzesTab     quizzes={quizzes}                 color={c} courseId={courseId}/>}
+            {tab === "grades"      && <GradesTab      quizzes={quizzes} assignments={assignments} color={c}/>}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+    </div>
+  );
+}

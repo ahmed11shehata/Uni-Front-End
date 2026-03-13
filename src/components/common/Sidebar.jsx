@@ -1,7 +1,8 @@
 ﻿import { useState, useEffect } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../hooks/useAuth";
+import { useNotifications } from "../../context/NotificationContext";
 import styles from "./Sidebar.module.css";
 
 /* ── Icons ─────────────────────────────────────── */
@@ -18,31 +19,41 @@ const IC = {
   upload:      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>,
   users:       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>,
   logout:      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
+  schedule:    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="16" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="8" y2="18"/><line x1="12" y1="18" x2="12" y2="18"/></svg>,
+  themes:      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.93" y1="4.93" x2="7.05" y2="7.05"/><line x1="16.95" y1="16.95" x2="19.07" y2="19.07"/><line x1="19.07" y1="4.93" x2="16.95" y2="7.05"/><line x1="7.05" y1="16.95" x2="4.93" y2="19.07"/></svg>,
   chevL:       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>,
 };
 
+/* ── Nav data
+   ✅ FIXED: Manage Users has its own unique path
+────────────────────────────────────────────────── */
 const NAV = {
   student: [
     { label: "Home",                path: "/student/dashboard",        icon: IC.home,        badge: null  },
-    { label: "My Courses",          path: "/student/courses",          icon: IC.courses,     badge: "6"   },
+    { label: "My Courses",          path: "/student/courses",          icon: IC.courses,     badge: null  },
     { label: "Grades",              path: "/student/grades",           icon: IC.grades,      badge: null  },
     { label: "Timetable",           path: "/student/timetable",        icon: IC.timetable,   badge: null  },
-    { label: "Quizzes",             path: "/student/quizzes",          icon: IC.quizzes,     badge: "2"   },
-    { label: "Assignments",         path: "/student/assignments",      icon: IC.assignments, badge: "3"   },
+    { label: "Schedule",            path: "/student/schedule",         icon: IC.schedule,    badge: null  },
+    { label: "Quizzes",             path: "/student/quizzes",          icon: IC.quizzes,     badge: null  },
     { label: "AI Tools",            path: "/student/ai-tools",         icon: IC.ai,          badge: "NEW" },
     { label: "Course Registration", path: "/student/register-courses", icon: IC.register,    badge: null  },
+    { label: "Themes",              path: "/student/themes",           icon: IC.themes,      badge: null  },
   ],
   instructor: [
     { label: "Home",            path: "/instructor/dashboard",    icon: IC.home,        badge: null },
+    { label: "Schedule",        path: "/instructor/schedule",     icon: IC.schedule,    badge: null },
     { label: "Quiz Builder",    path: "/instructor/quiz-builder", icon: IC.quiz_build,  badge: null },
     { label: "Assignments",     path: "/instructor/assignments",  icon: IC.assignments, badge: null },
     { label: "Upload Lectures", path: "/instructor/lectures",     icon: IC.upload,      badge: null },
     { label: "Grades",          path: "/instructor/grades",       icon: IC.grades,      badge: null },
+    { label: "Themes",          path: "/instructor/themes",       icon: IC.themes,      badge: null },
   ],
   admin: [
-    { label: "Home",          path: "/admin/dashboard", icon: IC.home,     badge: null },
-    { label: "Register User", path: "/admin/register",  icon: IC.register, badge: null },
-    { label: "Manage Users",  path: "/admin/dashboard", icon: IC.users,    badge: null },
+    { label: "Home",          path: "/admin/dashboard",    icon: IC.home,     badge: null },
+    { label: "Schedule",      path: "/admin/schedule",     icon: IC.schedule, badge: null },
+    { label: "Register User", path: "/admin/register",     icon: IC.register, badge: null },
+    { label: "Manage Users",  path: "/admin/manage-users", icon: IC.users,    badge: null },
+    { label: "Themes",        path: "/admin/themes",       icon: IC.themes,   badge: null },
   ],
 };
 
@@ -53,8 +64,15 @@ const ROLES = {
 };
 
 /* ── Nav Item ────────────────────────────────────── */
-function NavItem({ item, collapsed, index }) {
+function NavItem({ item, collapsed, index, accent }) {
   const [tip, setTip] = useState(false);
+  const location = useLocation();
+
+  // ✅ FIXED: dashboard roots never match child routes
+  const EXACT_PATHS = ["/admin/dashboard", "/student/dashboard", "/instructor/dashboard"];
+  const isActive = EXACT_PATHS.includes(item.path)
+    ? location.pathname === item.path
+    : location.pathname === item.path || location.pathname.startsWith(item.path + "/");
 
   return (
     <motion.div
@@ -67,68 +85,65 @@ function NavItem({ item, collapsed, index }) {
     >
       <NavLink
         to={item.path}
-        className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ""}`}
+        end
+        className={`${styles.navItem} ${isActive ? styles.navActive : ""}`}
+        style={{ "--accent": accent }}
       >
-        {({ isActive }) => (
-          <>
-            {/* Sliding active background */}
-            {isActive && (
-              <motion.div
-                className={styles.activeBg}
-                layoutId="activeBg"
-                transition={{ type: "spring", stiffness: 380, damping: 32 }}
-              />
-            )}
+        {/* Sliding active background — ORIGINAL */}
+        {isActive && (
+          <motion.div
+            className={styles.activeBg}
+            layoutId="activeBg"
+            transition={{ type: "spring", stiffness: 380, damping: 32 }}
+          />
+        )}
 
-            {/* Icon */}
-            <motion.div
-              className={styles.iconWrap}
-              whileHover={{ scale: 1.1 }}
-              animate={isActive ? { scale: 1 } : { scale: 1 }}
+        {/* Icon */}
+        <motion.div
+          className={`${styles.iconWrap} ${isActive ? styles.iconActive : ""}`}
+          whileHover={{ scale: 1.1 }}
+          transition={{ duration: 0.2 }}
+        >
+          {item.icon}
+        </motion.div>
+
+        {/* Label */}
+        <AnimatePresence>
+          {!collapsed && (
+            <motion.span
+              className={styles.navLabel}
+              initial={{ opacity: 0, x: -10, width: 0 }}
+              animate={{ opacity: 1, x: 0, width: "auto" }}
+              exit={{ opacity: 0, x: -8, width: 0 }}
               transition={{ duration: 0.2 }}
             >
-              {item.icon}
-            </motion.div>
+              {item.label}
+            </motion.span>
+          )}
+        </AnimatePresence>
 
-            {/* Label */}
-            <AnimatePresence>
-              {!collapsed && (
-                <motion.span
-                  className={styles.navLabel}
-                  initial={{ opacity: 0, x: -10, width: 0 }}
-                  animate={{ opacity: 1, x: 0, width: "auto" }}
-                  exit={{ opacity: 0, x: -8, width: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {item.label}
-                </motion.span>
-              )}
-            </AnimatePresence>
+        {/* Badge */}
+        <AnimatePresence>
+          {!collapsed && item.badge && (
+            <motion.span
+              className={`${styles.badge} ${item.badge === "NEW" ? styles.badgeNew : styles.badgeNum}`}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 480, damping: 22 }}
+            >
+              {item.badge}
+            </motion.span>
+          )}
+        </AnimatePresence>
 
-            {/* Badge */}
-            <AnimatePresence>
-              {!collapsed && item.badge && (
-                <motion.span
-                  className={`${styles.badge} ${item.badge === "NEW" ? styles.badgeNew : styles.badgeNum}`}
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0, opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 480, damping: 22 }}
-                >
-                  {item.badge}
-                </motion.span>
-              )}
-            </AnimatePresence>
-
-            {/* Active left indicator */}
-            {isActive && (
-              <motion.div
-                className={styles.activeBar}
-                layoutId="activeBar"
-                transition={{ type: "spring", stiffness: 380, damping: 32 }}
-              />
-            )}
-          </>
+        {/* Active left indicator */}
+        {isActive && (
+          <motion.div
+            className={styles.activeBar}
+            layoutId="activeBar"
+            transition={{ type: "spring", stiffness: 380, damping: 32 }}
+          />
         )}
       </NavLink>
 
@@ -155,17 +170,48 @@ function NavItem({ item, collapsed, index }) {
 /* ── Sidebar ─────────────────────────────────────── */
 export default function Sidebar({ collapsed, onToggle }) {
   const { user, logout } = useAuth();
+  const { getNotifs }    = useNotifications();
   const navigate = useNavigate();
   const [showLogout, setShowLogout] = useState(false);
   const [time, setTime] = useState(new Date());
 
-  const items  = NAV[user?.role] || [];
+  /* ── Dynamic badges from NotificationContext ── */
+  const notifs = getNotifs(user?.role || "student");
+  const unread = notifs.filter(n => !n.read);
+
+  const dynamicBadges = {
+    student: {
+      "/student/quizzes":     unread.filter(n => n.type === "quiz_available").length   || null,
+
+      "/student/courses":     unread.filter(n => n.type === "lecture_uploaded").length || null,
+      "/student/ai-tools":    "NEW",
+    },
+    instructor: {
+      "/instructor/assignments": unread.filter(n => n.type === "submission_new").length || null,
+      "/instructor/grades":      unread.filter(n => n.type === "quiz_ended").length     || null,
+    },
+    admin: {
+      "/admin/manage-users": unread.filter(n => n.type === "user_registered").length || null,
+      "/admin/register":     unread.filter(n => n.type === "system_alert").length    || null,
+    },
+  };
+
+  const roleBadges = dynamicBadges[user?.role] || {};
+
+  /* ── Inject dynamic badges into NAV items ── */
+  const rawItems = NAV[user?.role] || [];
+  const items = rawItems.map(item => ({
+    ...item,
+    badge: roleBadges[item.path] !== undefined ? roleBadges[item.path] : null,
+  }));
+
   const role   = ROLES[user?.role] || ROLES.student;
   const letter = user?.name?.charAt(0)?.toUpperCase() || "?";
-  // Shorten name: first + first word of last
+
+  // First + Last name only
   const displayName = (() => {
-    const parts = (user?.name || "").trim().split(" ");
-    if (parts.length === 1) return parts[0];
+    const parts = (user?.name || "").trim().split(/\s+/);
+    if (parts.length <= 2) return parts.join(" ");
     return `${parts[0]} ${parts[parts.length - 1]}`;
   })();
 
@@ -174,7 +220,8 @@ export default function Sidebar({ collapsed, onToggle }) {
     return () => clearInterval(t);
   }, []);
 
-  const hhmm = time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  // Small clock — HH:MM only, 24h
+  const hhmm = time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
 
   return (
     <motion.aside
@@ -183,7 +230,7 @@ export default function Sidebar({ collapsed, onToggle }) {
       animate={{ width: collapsed ? 70 : 252 }}
       transition={{ type: "spring", stiffness: 280, damping: 30 }}
     >
-      {/* Subtle top glow */}
+      {/* Subtle top glow — same as original */}
       <div
         className={styles.topGlow}
         style={{ background: `radial-gradient(ellipse 100% 40% at 50% 0%, ${role.accent}18, transparent)` }}
@@ -265,8 +312,23 @@ export default function Sidebar({ collapsed, onToggle }) {
                   </span>
                 </div>
 
-                {/* Time */}
-                <span className={styles.timeTag}>{hhmm}</span>
+                {/* ✅ Small styled clock — replaces plain timeTag */}
+                <motion.div
+                  className={styles.clockPill}
+                  style={{ borderColor: `${role.accent}30` }}
+                  animate={{ opacity: [0.7, 1, 0.7] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <motion.span
+                    className={styles.clockDot}
+                    style={{ background: role.accent }}
+                    animate={{ opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  />
+                  <span className={styles.clockTime} style={{ color: role.accent }}>
+                    {hhmm}
+                  </span>
+                </motion.div>
               </div>
             </motion.div>
           ) : (
@@ -315,7 +377,13 @@ export default function Sidebar({ collapsed, onToggle }) {
       {/* ══ NAV ══ */}
       <nav className={styles.nav}>
         {items.map((item, i) => (
-          <NavItem key={item.label} item={item} collapsed={collapsed} index={i} />
+          <NavItem
+            key={item.path}
+            item={item}
+            collapsed={collapsed}
+            index={i}
+            accent={role.accent}
+          />
         ))}
       </nav>
 
@@ -396,7 +464,6 @@ export default function Sidebar({ collapsed, onToggle }) {
               </motion.span>
             )}
           </AnimatePresence>
-          {/* subtle red dot */}
           <motion.span
             className={styles.logoutDot}
             animate={{ opacity: [0.6, 1, 0.6] }}

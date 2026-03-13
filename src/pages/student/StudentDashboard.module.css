@@ -158,7 +158,7 @@
 }
 
 .statCard {
-  background: white;
+  background: var(--card-bg, white);
   border-radius: 22px; padding: 22px 18px;
   display: flex; align-items: center; gap: 14px;
   border: 1px solid rgba(0,0,0,0.05);
@@ -183,7 +183,7 @@
   color: var(--c); font-variant-numeric: tabular-nums;
 }
 
-.statLbl { font-size: 12px; color: #6b7280; font-weight: 600; }
+.statLbl { font-size: 12px; color: var(--text-secondary, #475569); font-weight: 600; }
 .statSub { font-size: 11px; color: #10b981; font-weight: 600; }
 
 .statBar {
@@ -200,7 +200,7 @@
 }
 
 .card {
-  background: white; border-radius: 22px; padding: 28px;
+  background: var(--card-bg, white); border-radius: 22px; padding: 28px;
   box-shadow: 0 4px 20px rgba(15,27,76,0.07);
   border: 1px solid rgba(0,0,0,0.05);
   position: relative; overflow: hidden;
@@ -213,11 +213,11 @@
 .cardBigIcon { font-size: 28px; display: block; margin-bottom: 10px; margin-top: 8px; }
 
 .cardTitle {
-  font-size: 16px; font-weight: 700; color: #0f1b4c; margin: 0 0 10px;
+  font-size: 16px; font-weight: 700; color: var(--text-primary, #0f172a); margin: 0 0 10px;
 }
 
 .cardText {
-  font-size: 13px; color: #6b7280; line-height: 1.8; margin: 0;
+  font-size: 13px; color: var(--text-secondary, #475569); line-height: 1.8; margin: 0;
 }
 
 .cardHeader {
@@ -234,7 +234,7 @@
   flex-shrink: 0;
 }
 
-.cardMeta { font-size: 12px; color: #9ca3af; margin: 2px 0 0; }
+.cardMeta { font-size: 12px; color: var(--text-muted, #94a3b8); margin: 2px 0 0; }
 
 .viewAll {
   font-size: 12px; color: #7c3aed; font-weight: 600;
@@ -250,7 +250,7 @@
 .upRow {
   display: flex; align-items: center; gap: 12px;
   padding: 12px 14px; border-radius: 14px;
-  background: #fafafa;
+  background: var(--detail-bg, #fafafa);
   border-left: 3px solid var(--c);
   cursor: default; transition: all 0.2s;
 }
@@ -263,12 +263,12 @@
 }
 
 .upMid { flex: 1; }
-.upMid strong { font-size: 13px; font-weight: 700; color: #111827; display: block; margin-bottom: 2px; }
-.upMid span   { font-size: 11px; color: #9ca3af; }
+.upMid strong { font-size: 13px; font-weight: 700; color: var(--text-primary, #0f172a); display: block; margin-bottom: 2px; }
+.upMid span   { font-size: 11px; color: var(--text-muted, #94a3b8); }
 
 .upEnd { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
 .upDate { font-size: 12px; font-weight: 700; color: var(--c); }
-.upTime { font-size: 11px; color: #9ca3af; }
+.upTime { font-size: 11px; color: var(--text-muted, #94a3b8); }
 
 /* Courses */
 .courseList { display: flex; flex-direction: column; gap: 14px; }
@@ -287,8 +287,8 @@
 }
 
 .courseMid { flex:1; }
-.courseMid strong { font-size: 13px; font-weight: 700; color: #111827; display: block; margin-bottom: 2px; }
-.courseMid span   { font-size: 11px; color: #9ca3af; display: block; margin-bottom: 8px; }
+.courseMid strong { font-size: 13px; font-weight: 700; color: var(--text-primary, #0f172a); display: block; margin-bottom: 2px; }
+.courseMid span   { font-size: 11px; color: var(--text-muted, #94a3b8); display: block; margin-bottom: 8px; }
 
 .track { height: 7px; background: #f0f2ff; border-radius: 4px; overflow: hidden; }
 .trackFill {
@@ -301,14 +301,14 @@
 /* ══ STORY ════════════════════════════════════════ */
 .storySection {
   display: grid; grid-template-columns: 1fr 1fr; gap: 40px;
-  background: white; border-radius: 22px; padding: 40px;
+  background: var(--card-bg, white); border-radius: 22px; padding: 40px;
   box-shadow: 0 4px 20px rgba(15,27,76,0.07);
   border: 1px solid rgba(0,0,0,0.05);
   width: 100%;
 }
 
 .storyLeft p {
-  font-size: 13px; color: #6b7280; line-height: 1.9; margin: 0 0 14px;
+  font-size: 13px; color: var(--text-secondary, #475569); line-height: 1.9; margin: 0 0 14px;
 }
 
 .storyImgWrap { height: 100%; display: flex; align-items: center; }
@@ -342,10 +342,10 @@
 }
 
 .sectionTitle {
-  font-size: 24px; font-weight: 800; color: #0f1b4c; margin: 0 0 6px;
+  font-size: 24px; font-weight: 800; color: var(--text-primary, #0f172a); margin: 0 0 6px;
 }
 
-.sectionSub { font-size: 13px; color: #9ca3af; margin: 0; }
+.sectionSub { font-size: 13px; color: var(--text-muted, #94a3b8); margin: 0; }
 
 /* ══ VALUES ═══════════════════════════════════════ */
 .valuesGrid {
@@ -353,7 +353,7 @@
 }
 
 .valueCard {
-  background: white; border-radius: 20px; padding: 32px 20px;
+  background: var(--card-bg, white); border-radius: 20px; padding: 32px 20px;
   text-align: center;
   box-shadow: 0 4px 20px rgba(15,27,76,0.07);
   border: 1px solid rgba(0,0,0,0.05);
@@ -368,15 +368,15 @@
 .valueCard:hover::after { opacity: 1; }
 
 .valueEmoji { font-size: 40px; display: block; margin-bottom: 16px; }
-.valueCard h4 { font-size: 14px; font-weight: 700; color: #0f1b4c; margin: 0 0 8px; }
-.valueCard p  { font-size: 12px; color: #6b7280; line-height: 1.7; margin: 0; }
+.valueCard h4 { font-size: 14px; font-weight: 700; color: var(--text-primary, #0f172a); margin: 0 0 8px; }
+.valueCard p  { font-size: 12px; color: var(--text-secondary, #475569); line-height: 1.7; margin: 0; }
 
 /* ══ MILESTONES ═══════════════════════════════════ */
 .milestoneList { display: flex; flex-direction: column; gap: 10px; width: 100%; }
 
 .milestoneRow {
   display: flex; align-items: center; gap: 0;
-  background: white; border-radius: 16px; overflow: hidden;
+  background: var(--card-bg, white); border-radius: 16px; overflow: hidden;
   box-shadow: 0 2px 12px rgba(15,27,76,0.05);
   border: 1px solid rgba(0,0,0,0.05);
   cursor: default; transition: all 0.25s;
@@ -403,7 +403,7 @@
 }
 
 .studentCard {
-  background: white; border-radius: 20px; padding: 28px 16px;
+  background: var(--card-bg, white); border-radius: 20px; padding: 28px 16px;
   text-align: center;
   box-shadow: 0 4px 20px rgba(15,27,76,0.07);
   border: 1px solid rgba(0,0,0,0.05);
@@ -418,15 +418,15 @@
   margin: 0 auto 12px;
 }
 
-.studentName  { font-size: 14px; font-weight: 700; color: #0f1b4c; display: block; margin-bottom: 4px; }
-.studentDept  { font-size: 11px; color: #9ca3af; display: block; margin-bottom: 10px; }
+.studentName  { font-size: 14px; font-weight: 700; color: var(--text-primary, #0f172a); display: block; margin-bottom: 4px; }
+.studentDept  { font-size: 11px; color: var(--text-muted, #94a3b8); display: block; margin-bottom: 10px; }
 .studentGpa   {
   display: inline-flex; align-items: center; gap: 4px;
   background: #fef9c3; color: #a16207;
   font-size: 13px; font-weight: 700;
   padding: 5px 14px; border-radius: 20px; margin-bottom: 10px;
 }
-.studentAward { font-size: 11px; color: #6b7280; line-height: 1.6; margin: 0; }
+.studentAward { font-size: 11px; color: var(--text-secondary, #475569); line-height: 1.6; margin: 0; }
 
 /* ══ LEADERSHIP ═══════════════════════════════════ */
 .leaderSection {
@@ -477,12 +477,12 @@
 }
 
 .contactLeft, .contactRight {
-  background: white; border-radius: 22px; padding: 30px;
+  background: var(--card-bg, white); border-radius: 22px; padding: 30px;
   box-shadow: 0 4px 20px rgba(15,27,76,0.07);
   border: 1px solid rgba(0,0,0,0.05);
 }
 
-.contactTitle { font-size: 17px; font-weight: 700; color: #0f1b4c; margin: 0 0 22px; }
+.contactTitle { font-size: 17px; font-weight: 700; color: var(--text-primary, #0f172a); margin: 0 0 22px; }
 
 .contactList { display: flex; flex-direction: column; gap: 16px; }
 
@@ -495,8 +495,8 @@
   font-size: 16px; flex-shrink: 0;
 }
 
-.contactLabel { font-size: 12px; font-weight: 700; color: #0f1b4c; display: block; margin-bottom: 2px; }
-.contactVal   { font-size: 12px; color: #6b7280; }
+.contactLabel { font-size: 12px; font-weight: 700; color: var(--text-primary, #0f172a); display: block; margin-bottom: 2px; }
+.contactVal   { font-size: 12px; color: var(--text-secondary, #475569); }
 
 /* Map */
 .mapPlaceholder {
@@ -507,8 +507,8 @@
   align-items: center; justify-content: center;
   gap: 6px; position: relative; overflow: hidden;
 }
-.mapPlaceholder p    { font-size: 15px; font-weight: 700; color: #0f1b4c; margin: 0; position: relative; z-index:1; }
-.mapPlaceholder span { font-size: 12px; color: #6b7280; position: relative; z-index:1; }
+.mapPlaceholder p    { font-size: 15px; font-weight: 700; color: var(--text-primary, #0f172a); margin: 0; position: relative; z-index:1; }
+.mapPlaceholder span { font-size: 12px; color: var(--text-secondary, #475569); position: relative; z-index:1; }
 .mapPin { font-size: 42px; position: relative; z-index:1; }
 .mapGrid {
   position: absolute; inset:0;

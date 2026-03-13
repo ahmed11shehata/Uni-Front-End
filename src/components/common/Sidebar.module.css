@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════════════
-   SIDEBAR — Elegant, Eye-Friendly, Animated
-   One accent color. Deep dark base. Subtle motion.
+   SIDEBAR — Original design preserved exactly
+   Only change: timeTag → clockPill (small & styled)
 ══════════════════════════════════════════════════ */
 
 .sidebar {
@@ -10,14 +10,12 @@
   z-index: 100;
   display: flex;
   flex-direction: column;
-  /* Deep dark, slightly warm — easier on the eyes than pure black */
-  background: #0d0f1c;
+  background: var(--sidebar-bg, #16192a);
   border-right: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: 6px 0 40px rgba(0, 0, 0, 0.4);
   overflow: hidden;
 }
 
-/* Subtle top color wash */
 .topGlow {
   position: absolute;
   top: 0; left: 0; right: 0;
@@ -138,6 +136,7 @@
   flex-direction: column;
   gap: 3px;
   min-width: 0;
+  overflow: hidden;
 }
 
 .userName {
@@ -157,13 +156,30 @@
   opacity: 0.9;
 }
 
-.timeTag {
+/* ── Clock pill — small, replaces old timeTag ─── */
+.clockPill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 3px 7px 3px 6px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid;
+}
+
+.clockDot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.clockTime {
   font-size: 11px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.22);
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
   font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
+  line-height: 1;
 }
 
 /* Mini (collapsed) */
@@ -204,7 +220,6 @@
   );
 }
 
-/* Section label */
 .sectionLabel {
   position: relative;
   z-index: 2;
@@ -234,7 +249,6 @@
 
 .nav::-webkit-scrollbar { width: 0; }
 
-/* Nav item */
 .navItem {
   display: flex;
   align-items: center;
@@ -256,20 +270,18 @@
   color: rgba(255, 255, 255, 0.75);
 }
 
-/* Active state */
 .navActive {
   color: rgba(255, 255, 255, 0.95) !important;
   font-weight: 600;
 }
 
-/* Active background — accent-tinted, very subtle */
+/* Active background — ORIGINAL, unchanged */
 .activeBg {
   position: absolute;
   inset: 0;
   border-radius: 11px;
   background: rgba(255, 255, 255, 0.07);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  /* Accent left edge */
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
@@ -286,8 +298,8 @@
 
 .iconWrap svg { width: 18px; height: 18px; }
 
-.navActive .iconWrap {
-  color: var(--accent);
+.iconActive {
+  color: var(--accent) !important;
 }
 
 /* Label */
@@ -327,9 +339,8 @@
   50%       { opacity: 0.55; }
 }
 
-/* Active left bar */
 .activeBar {
-  display: none; /* we use box-shadow on activeBg instead */
+  display: none;
 }
 
 /* ══ TOOLTIP ══════════════════════════════════ */
@@ -381,7 +392,6 @@
   padding-bottom: 12px;
 }
 
-/* Logout confirm box */
 .logoutBox {
   margin: 0 10px 8px;
   padding: 12px 12px 11px;
@@ -406,7 +416,6 @@
   gap: 6px;
 }
 
-/* Confirm = red */
 .btnConfirm {
   flex: 1;
   display: flex;
@@ -438,7 +447,6 @@
 }
 .btnIcon svg { width: 14px; height: 14px; }
 
-/* Cancel = ghost */
 .btnCancel {
   flex: 1;
   padding: 8px 10px;
@@ -458,7 +466,6 @@
   color: rgba(255, 255, 255, 0.7);
 }
 
-/* ── Logout button ────────────────────────── */
 .logoutBtn {
   display: flex;
   align-items: center;
@@ -511,7 +518,6 @@
   z-index: 1;
 }
 
-/* Small red breathing dot */
 .logoutDot {
   width: 5px; height: 5px;
   border-radius: 50%;
