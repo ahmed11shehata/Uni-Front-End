@@ -1,258 +1,581 @@
-import { useState, useMemo } from "react";
+// src/pages/student/CourseRegistrationPage.jsx
+import { useState, useMemo, useContext, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useRegistration } from "../../context/RegistrationContext";
+import { AuthContext } from "../../context/AuthContext";
 import styles from "./CourseRegistrationPage.module.css";
 
+/* ═══════════════════════════════════════════════════════════
+   GPA → Credit Hour System
+   GPA ≥ 3.0  → 21 credits  (Excellent)
+   GPA ≥ 2.0  → 18 credits  (Good)
+   GPA < 2.0  → 15 credits  (Probation)
+═══════════════════════════════════════════════════════════ */
+function getMaxCredits(gpa) {
+  if (gpa >= 3.0) return 21;
+  if (gpa >= 2.0) return 18;
+  return 15;
+}
+
+function getGpaLabel(gpa) {
+  if (gpa >= 3.7) return { label: "Excellent", color: "#22c55e" };
+  if (gpa >= 3.0) return { label: "Very Good", color: "#4ade80" };
+  if (gpa >= 2.0) return { label: "Good",      color: "#f59e0b" };
+  return                  { label: "Probation", color: "#ef4444" };
+}
+
+/* ── SVG Patterns (same style as CoursesPage) ── */
+function getPatternBg(pattern, color) {
+  const enc = encodeURIComponent;
+  const patterns = {
+    mosaic:   `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56'%3E%3Crect x='2' y='2' width='24' height='24' rx='3' fill='${enc(color)}' opacity='.45'/%3E%3Crect x='30' y='2' width='24' height='24' rx='3' fill='${enc(color)}' opacity='.25'/%3E%3Crect x='2' y='30' width='24' height='24' rx='3' fill='${enc(color)}' opacity='.25'/%3E%3Crect x='30' y='30' width='24' height='24' rx='3' fill='${enc(color)}' opacity='.45'/%3E%3C/svg%3E")`,
+    circles:  `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Ccircle cx='40' cy='40' r='28' fill='none' stroke='${enc(color)}' stroke-width='18' opacity='.28'/%3E%3Ccircle cx='0' cy='0' r='18' fill='none' stroke='${enc(color)}' stroke-width='12' opacity='.18'/%3E%3Ccircle cx='80' cy='80' r='18' fill='none' stroke='${enc(color)}' stroke-width='12' opacity='.18'/%3E%3C/svg%3E")`,
+    squares:  `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72'%3E%3Crect x='8' y='8' width='56' height='56' fill='none' stroke='${enc(color)}' stroke-width='3' opacity='.22'/%3E%3Crect x='18' y='18' width='36' height='36' fill='none' stroke='${enc(color)}' stroke-width='2.5' opacity='.18'/%3E%3Crect x='28' y='28' width='16' height='16' fill='none' stroke='${enc(color)}' stroke-width='2' opacity='.15'/%3E%3C/svg%3E")`,
+    diamonds: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cpolygon points='32,4 60,32 32,60 4,32' fill='none' stroke='${enc(color)}' stroke-width='3' opacity='.26'/%3E%3Cpolygon points='32,16 48,32 32,48 16,32' fill='none' stroke='${enc(color)}' stroke-width='2.5' opacity='.2'/%3E%3C/svg%3E")`,
+    waves:    `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='40'%3E%3Cpath d='M0 20 Q20 0 40 20 Q60 40 80 20' fill='none' stroke='${enc(color)}' stroke-width='3' opacity='.25'/%3E%3Cpath d='M0 30 Q20 10 40 30 Q60 50 80 30' fill='none' stroke='${enc(color)}' stroke-width='2' opacity='.15'/%3E%3C/svg%3E")`,
+    dots:     `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='4' cy='4' r='2.5' fill='${enc(color)}' opacity='.35'/%3E%3Ccircle cx='20' cy='4' r='1.5' fill='${enc(color)}' opacity='.2'/%3E%3Ccircle cx='4' cy='20' r='1.5' fill='${enc(color)}' opacity='.2'/%3E%3Ccircle cx='20' cy='20' r='2.5' fill='${enc(color)}' opacity='.35'/%3E%3C/svg%3E")`,
+  };
+  return patterns[pattern] || patterns.mosaic;
+}
+
+/* ── Mock Courses (move to mockData.js when ready) ── */
 const MOCK_COURSES = [
-  { id: 1, code: "CS101", name: "Introduction to Programming",    instructor: "Dr. Ahmed Hassan",  schedule: "Sun/Tue 10:00–11:30",  credits: 3, capacity: 50, enrolled: 35, status: "registered", locked: null },
-  { id: 2, code: "CS102", name: "Discrete Mathematics",           instructor: "Dr. Sara Khalil",   schedule: "Mon/Wed 12:00–13:30",  credits: 3, capacity: 50, enrolled: 48, status: "available",  locked: null },
-  { id: 3, code: "CS103", name: "Digital Logic Design",           instructor: "Dr. Omar Farouk",   schedule: "Sun/Tue 14:00–15:30",  credits: 3, capacity: 40, enrolled: 40, status: "full",       locked: null },
-  { id: 4, code: "CS104", name: "Calculus I",                     instructor: "Dr. Mona Adel",     schedule: "Mon/Wed 08:00–09:30",  credits: 3, capacity: 60, enrolled: 22, status: "available",  locked: null },
-  { id: 5, code: "CS105", name: "Data Structures",                instructor: "Dr. Khaled Nour",   schedule: "Sun/Tue 12:00–13:30",  credits: 3, capacity: 45, enrolled: 30, status: "locked",     locked: { reason: "Must pass CS101 first" } },
-  { id: 6, code: "CS106", name: "Object Oriented Programming",    instructor: "Dr. Hana Mostafa",  schedule: "Wed/Thu 10:00–11:30",  credits: 3, capacity: 50, enrolled: 18, status: "locked",     locked: { reason: "Must pass CS101 first" } },
-  { id: 7, code: "CS107", name: "Computer Organization",          instructor: "Dr. Tarek Samir",   schedule: "Mon/Thu 14:00–15:30",  credits: 3, capacity: 45, enrolled: 32, status: "available",  locked: null },
-  { id: 8, code: "MATH101", name: "Linear Algebra",               instructor: "Dr. Nadia Fouad",   schedule: "Sun/Wed 08:00–09:30",  credits: 3, capacity: 55, enrolled: 41, status: "registered", locked: null },
+  { id:1,  code:"CS101", name:"Introduction to Programming",   instructor:"Dr. Ahmed Hassan",  schedule:"Sun/Tue  10:00–11:30", credits:3, capacity:50, enrolled:35, status:"registered", prereqs:[], color:"#6366f1", pattern:"mosaic"   },
+  { id:2,  code:"CS102", name:"Discrete Mathematics",          instructor:"Dr. Sara Khalil",    schedule:"Mon/Wed  12:00–13:30", credits:3, capacity:50, enrolled:48, status:"available",  prereqs:[], color:"#8b5cf6", pattern:"circles"  },
+  { id:3,  code:"CS103", name:"Digital Logic Design",          instructor:"Dr. Omar Farouk",    schedule:"Sun/Tue  14:00–15:30", credits:3, capacity:40, enrolled:40, status:"full",       prereqs:[], color:"#78909c", pattern:"squares"  },
+  { id:4,  code:"CS104", name:"Calculus I",                    instructor:"Dr. Mona Adel",      schedule:"Mon/Wed  08:00–09:30", credits:3, capacity:60, enrolled:22, status:"available",  prereqs:[], color:"#0ea5e9", pattern:"diamonds" },
+  { id:5,  code:"CS105", name:"Data Structures",               instructor:"Dr. Khaled Nour",    schedule:"Sun/Tue  12:00–13:30", credits:3, capacity:45, enrolled:30, status:"locked",     prereqs:["CS101"], color:"#f59e0b", pattern:"waves"   },
+  { id:6,  code:"CS106", name:"Object Oriented Programming",   instructor:"Dr. Hana Mostafa",   schedule:"Wed/Thu  10:00–11:30", credits:3, capacity:50, enrolled:18, status:"locked",     prereqs:["CS101"], color:"#ef4444", pattern:"dots"    },
+  { id:7,  code:"CS107", name:"Computer Organization",         instructor:"Dr. Tarek Samir",    schedule:"Mon/Thu  14:00–15:30", credits:3, capacity:45, enrolled:32, status:"available",  prereqs:[], color:"#14b8a6", pattern:"mosaic"   },
+  { id:8,  code:"MATH101",name:"Linear Algebra",               instructor:"Dr. Nadia Fouad",    schedule:"Sun/Wed  08:00–09:30", credits:3, capacity:55, enrolled:41, status:"registered", prereqs:[], color:"#e05c8a", pattern:"circles"  },
 ];
 
-const STATUS_LABELS = {
-  all:        "All",
-  available:  "Available",
-  registered: "Registered",
-  locked:     "Locked",
-  full:       "Full",
+const FILTERS = ["All","Available","Registered","Locked","Full"];
+
+const STATUS_CFG = {
+  available:  { color:"#22c55e",  label:"Available"  },
+  registered: { color:"#818cf8",  label:"Registered" },
+  locked:     { color:"#f59e0b",  label:"Locked"     },
+  full:       { color:"#6b7280",  label:"Full"       },
 };
 
-export default function CourseRegistrationPage() {
-  const [courses, setCourses] = useState(MOCK_COURSES);
-  const [filter, setFilter]   = useState("all");
-  const [search, setSearch]   = useState("");
-  const [toast, setToast]     = useState(null);
+/* ── Variants ── */
+const fadeUp = { hidden:{opacity:0,y:20}, show:{opacity:1,y:0} };
+const stagger = { show:{ transition:{ staggerChildren:0.055 } } };
 
-  const allowedCredits    = 21;
+/* ═══════════════════════════════════════════════════════════
+   PAGE
+═══════════════════════════════════════════════════════════ */
+export default function CourseRegistrationPage() {
+  const { regWindow } = useRegistration();
+  const { user }      = useContext(AuthContext) ?? {};
+
+  // GPA-based credit limit (student.gpa from mock, fallback 3.0)
+  const studentGpa = user?.gpa ?? 3.0;
+  const gpaLabel   = getGpaLabel(studentGpa);
+  // Admin can override via regWindow.maxCredits; otherwise use GPA rule
+  const allowedCredits = regWindow?.maxCredits || getMaxCredits(studentGpa);
+
+  const [courses,     setCourses]     = useState(MOCK_COURSES);
+  const [filter,      setFilter]      = useState("All");
+  const [search,      setSearch]      = useState("");
+  const [confirmDrop, setConfirmDrop] = useState(null);
+  const [toasts,      setToasts]      = useState([]);
+
+  const addToast = useCallback((msg, type = "success") => {
+    const id = Date.now();
+    setToasts(p => [...p, {id, msg, type}]);
+    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 3500);
+  }, []);
+
   const registeredCredits = useMemo(
-    () => courses.filter(c => c.status === "registered").reduce((sum, c) => sum + c.credits, 0),
+    () => courses.filter(c => c.status === "registered").reduce((s,c) => s+c.credits, 0),
     [courses]
   );
+  const remaining = allowedCredits - registeredCredits;
+  const pct = Math.min(100, Math.round((registeredCredits / allowedCredits) * 100));
 
-  const showToast = (msg, type = "success") => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
+  const handleRegister = id => {
+    if (!regWindow?.isOpen) return;
+    const c = courses.find(x => x.id === id);
+    if (remaining < c.credits) { addToast("Not enough credit hours remaining", "error"); return; }
+    setCourses(p => p.map(x => x.id===id ? {...x, status:"registered", enrolled:x.enrolled+1} : x));
+    addToast(`${c.code} registered successfully ✓`);
   };
 
-  const handleRegister = (id) => {
-    const course = courses.find(c => c.id === id);
-    if (registeredCredits + course.credits > allowedCredits) {
-      showToast("Credit limit exceeded!", "error"); return;
-    }
-    setCourses(prev => prev.map(c => c.id === id ? { ...c, status: "registered", enrolled: c.enrolled + 1 } : c));
-    showToast(`${course.code} registered successfully ✓`);
-  };
-
-  const handleDrop = (id) => {
-    const course = courses.find(c => c.id === id);
-    setCourses(prev => prev.map(c => c.id === id ? { ...c, status: "available", enrolled: c.enrolled - 1 } : c));
-    showToast(`${course.code} dropped`, "info");
+  const handleDrop = id => {
+    const c = courses.find(x => x.id === id);
+    setCourses(p => p.map(x => x.id===id ? {...x, status:"available", enrolled:x.enrolled-1} : x));
+    setConfirmDrop(null);
+    addToast(`${c.code} dropped`, "info");
   };
 
   const filtered = useMemo(() => courses.filter(c => {
-    const matchFilter = filter === "all" || c.status === filter;
-    const matchSearch = c.name.toLowerCase().includes(search.toLowerCase()) || c.code.toLowerCase().includes(search.toLowerCase());
-    return matchFilter && matchSearch;
+    const f = filter==="All" || c.status.toLowerCase()===filter.toLowerCase();
+    const s = c.name.toLowerCase().includes(search.toLowerCase()) ||
+              c.code.toLowerCase().includes(search.toLowerCase());
+    return f && s;
   }), [courses, filter, search]);
 
-  const pct           = Math.round((registeredCredits / allowedCredits) * 100);
-  const progressColor = pct >= 90 ? "#ef4444" : pct >= 70 ? "#f59e0b" : "var(--accent)";
+  const counts = useMemo(() => ({
+    all:        courses.length,
+    available:  courses.filter(c=>c.status==="available").length,
+    registered: courses.filter(c=>c.status==="registered").length,
+    locked:     courses.filter(c=>c.status==="locked").length,
+    full:       courses.filter(c=>c.status==="full").length,
+  }), [courses]);
+
+  /* ── Registration CLOSED ── */
+  if (!regWindow?.isOpen) {
+    return (
+      <div className={styles.page}>
+        <ClosedState regWindow={regWindow} />
+      </div>
+    );
+  }
+
+  /* ── Deadline info ── */
+  const deadlineDate = regWindow?.deadline ? new Date(regWindow.deadline) : null;
+  const daysLeft = deadlineDate
+    ? Math.max(0, Math.ceil((deadlineDate - new Date()) / 86400000))
+    : null;
 
   return (
     <div className={styles.page}>
-      {toast && <div className={`${styles.toast} ${styles[toast.type]}`}>{toast.msg}</div>}
 
-      {/* Header */}
-      <div className={styles.header}>
-        <div className={styles.headerTop}>
+      {/* Toasts */}
+      <div className={styles.toastStack}>
+        <AnimatePresence>
+          {toasts.map(t => (
+            <motion.div key={t.id}
+              className={`${styles.toast} ${styles[`toast_${t.type}`]}`}
+              initial={{opacity:0,y:-16,scale:0.94}}
+              animate={{opacity:1,y:0,scale:1}}
+              exit={{opacity:0,x:60,scale:0.94}}
+              transition={{type:"spring",stiffness:400,damping:28}}
+            >
+              <span className={styles.toastDot}/>
+              {t.msg}
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
+      {/* Drop Modal */}
+      <AnimatePresence>
+        {confirmDrop && (
+          <motion.div className={styles.overlay}
+            initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+            onClick={()=>setConfirmDrop(null)}
+          >
+            <motion.div className={styles.modal}
+              initial={{scale:0.86,y:28,opacity:0}}
+              animate={{scale:1,y:0,opacity:1}}
+              exit={{scale:0.9,opacity:0}}
+              transition={{type:"spring",stiffness:360,damping:26}}
+              onClick={e=>e.stopPropagation()}
+            >
+              <div className={styles.modalRing}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="1.8">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+                </svg>
+              </div>
+              <h3 className={styles.modalTitle}>Drop Course?</h3>
+              <p className={styles.modalSub}>
+                <strong>{confirmDrop.code}</strong> — {confirmDrop.name}
+                <br/>You can re-register before the deadline.
+              </p>
+              <div className={styles.modalRow}>
+                <button className={styles.modalCancel} onClick={()=>setConfirmDrop(null)}>Cancel</button>
+                <button className={styles.modalDrop}   onClick={()=>handleDrop(confirmDrop.id)}>Drop Course</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Header ── */}
+      <motion.div className={styles.header} variants={fadeUp} initial="hidden" animate="show">
+        <div className={styles.headerLeft}>
+          <div className={styles.headerIcon}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
+            </svg>
+          </div>
           <div>
-            <h1 className={styles.title}>Course Registration</h1>
-            <p className={styles.subtitle}>Year 1 — Semester 1 &nbsp;|&nbsp; 2025/2026</p>
-          </div>
-          <div className={styles.creditBadge}>
-            <span className={styles.creditNum} style={{ color: progressColor }}>{registeredCredits}</span>
-            <span className={styles.creditSlash}>/</span>
-            <span className={styles.creditTotal}>{allowedCredits}</span>
-            <span className={styles.creditLabel}>Credits</span>
+            <h1 className={styles.headerTitle}>Course Registration</h1>
+            <p className={styles.headerSub}>{regWindow.semester} · {regWindow.academicYear}</p>
           </div>
         </div>
 
-        <div className={styles.progressWrap}>
-          <div className={styles.progressBar}>
-            <div className={styles.progressFill} style={{ width: `${pct}%`, background: progressColor }} />
+        {/* Live banner */}
+        <div className={styles.liveBanner}>
+          <span className={styles.liveDot}/>
+          <span className={styles.liveLabel}>Registration Open</span>
+          {daysLeft !== null && (
+            <span className={`${styles.deadline} ${daysLeft<=3?styles.deadlineUrgent:""}`}>
+              {daysLeft===0 ? "Closes Today!" : `${daysLeft}d left`}
+            </span>
+          )}
+        </div>
+      </motion.div>
+
+      {/* ── GPA + Credits Widget ── */}
+      <motion.div className={styles.creditsCard}
+        variants={fadeUp} initial="hidden" animate="show" transition={{delay:0.06}}>
+
+        {/* Left: GPA info */}
+        <div className={styles.gpaBlock}>
+          <div className={styles.gpaCircle} style={{"--gc": gpaLabel.color}}>
+            <span className={styles.gpaNum}>{studentGpa.toFixed(1)}</span>
+            <span className={styles.gpaSlash}>GPA</span>
           </div>
-          <span className={styles.progressPct}>{pct}%</span>
+          <div>
+            <div className={styles.gpaTag} style={{color:gpaLabel.color, background:`${gpaLabel.color}15`}}>
+              {gpaLabel.label}
+            </div>
+            <div className={styles.gpaRule}>
+              Credit limit: <strong>{allowedCredits} hrs</strong>
+            </div>
+          </div>
         </div>
 
-        <div className={styles.statsRow}>
+        {/* Divider */}
+        <div className={styles.creditsDivider}/>
+
+        {/* Centre: progress */}
+        <div className={styles.progressBlock}>
+          <div className={styles.progressNums}>
+            <span className={styles.progressUsed}
+              style={{color: pct>=90?"#ef4444":pct>=70?"#f59e0b":"var(--accent)"}}>
+              {registeredCredits}
+            </span>
+            <span className={styles.progressOf}>/ {allowedCredits}</span>
+            <span className={styles.progressLabel}>credit hours used</span>
+          </div>
+          <div className={styles.progressTrack}>
+            <motion.div className={styles.progressBar}
+              initial={{width:0}}
+              animate={{width:`${pct}%`}}
+              transition={{duration:1.1, ease:[0.22,1,0.36,1]}}
+              style={{background: pct>=90?"#ef4444":pct>=70?"#f59e0b":"var(--accent)"}}
+            />
+          </div>
+          <div className={styles.progressRemain}>
+            <span>{remaining} hrs remaining</span>
+            <span>{pct}%</span>
+          </div>
+        </div>
+
+        {/* Right: status pills */}
+        <div className={styles.pillsBlock}>
           {[
-            { label: "Registered", value: courses.filter(c => c.status === "registered").length, color: "var(--accent)" },
-            { label: "Available",  value: courses.filter(c => c.status === "available").length,  color: "#22c55e" },
-            { label: "Locked",     value: courses.filter(c => c.status === "locked").length,     color: "#f59e0b" },
-            { label: "Full",       value: courses.filter(c => c.status === "full").length,       color: "#6b7280" },
-          ].map(s => (
-            <div key={s.label} className={styles.statChip}>
-              <span className={styles.statVal} style={{ color: s.color }}>{s.value}</span>
-              <span className={styles.statLabel}>{s.label}</span>
+            {key:"registered", label:"Registered"},
+            {key:"available",  label:"Available"},
+            {key:"locked",     label:"Locked"},
+            {key:"full",       label:"Full"},
+          ].map(p => (
+            <div key={p.key} className={styles.pill}>
+              <span className={styles.pillDot} style={{background:STATUS_CFG[p.key].color}}/>
+              <span className={styles.pillCount} style={{color:STATUS_CFG[p.key].color}}>
+                {counts[p.key]}
+              </span>
+              <span className={styles.pillLabel}>{p.label}</span>
             </div>
           ))}
         </div>
-      </div>
 
-      {/* Filters */}
-      <div className={styles.controls}>
-        <div className={styles.filterTabs}>
-          {Object.entries(STATUS_LABELS).map(([key, label]) => (
-            <button
-              key={key}
-              className={`${styles.filterBtn} ${filter === key ? styles.active : ""}`}
-              onClick={() => setFilter(key)}
-            >
-              {label}
-              <span className={styles.filterCount}>
-                {key === "all" ? courses.length : courses.filter(c => c.status === key).length}
-              </span>
-            </button>
+        {/* Credit legend */}
+        <div className={styles.creditLegend}>
+          <div className={styles.creditLegendTitle}>Credit Rules</div>
+          {[
+            {range:"GPA ≥ 3.0", hrs:"21 hrs", color:"#22c55e"},
+            {range:"GPA ≥ 2.0", hrs:"18 hrs", color:"#f59e0b"},
+            {range:"GPA < 2.0", hrs:"15 hrs", color:"#ef4444"},
+          ].map(r => (
+            <div key={r.range} className={styles.creditRule}
+              style={{opacity: allowedCredits === parseInt(r.hrs) ? 1 : 0.4}}>
+              <span className={styles.creditRuleDot} style={{background:r.color}}/>
+              <span>{r.range}</span>
+              <span className={styles.creditRuleHrs} style={{color:r.color}}>{r.hrs}</span>
+            </div>
           ))}
         </div>
-        <div className={styles.searchWrap}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      </motion.div>
+
+      {/* ── Controls ── */}
+      <motion.div className={styles.controls}
+        variants={fadeUp} initial="hidden" animate="show" transition={{delay:0.1}}>
+        <div className={styles.filterRow}>
+          {FILTERS.map(f => {
+            const count = f==="All" ? counts.all : counts[f.toLowerCase()] ?? 0;
+            return (
+              <button key={f}
+                className={`${styles.chip} ${filter===f?styles.chipOn:""}`}
+                onClick={()=>setFilter(f)}
+              >
+                {f}
+                <span className={styles.chipCount}>{count}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className={styles.searchBox}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
-          <input
-            className={styles.searchInput}
-            placeholder="Search courses..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+          <input className={styles.searchIn} placeholder="Search by name or code…"
+            value={search} onChange={e=>setSearch(e.target.value)}/>
+          {search && (
+            <button className={styles.clearBtn} onClick={()=>setSearch("")}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          )}
         </div>
-      </div>
+      </motion.div>
 
-      {/* Grid */}
-      <div className={styles.grid}>
-        {filtered.map(course => (
-          <CourseCard
-            key={course.id}
-            course={course}
-            onRegister={handleRegister}
-            onDrop={handleDrop}
-            remainingCredits={allowedCredits - registeredCredits}
-          />
-        ))}
-        {filtered.length === 0 && (
-          <div className={styles.empty}>
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
-              <rect x="9" y="3" width="6" height="4" rx="1"/>
-            </svg>
-            <p>No courses found</p>
-          </div>
+      {/* ── Grid ── */}
+      <motion.div className={styles.grid}
+        variants={stagger} initial="hidden" animate="show">
+        <AnimatePresence mode="popLayout">
+          {filtered.map((course, i) => (
+            <CourseCard key={course.id} course={course} index={i}
+              remaining={remaining}
+              onRegister={()=>handleRegister(course.id)}
+              onDrop={()=>setConfirmDrop(course)}
+            />
+          ))}
+        </AnimatePresence>
+        {filtered.length===0 && (
+          <motion.div className={styles.empty} variants={fadeUp}>
+            <div className={styles.emptyIcon}>
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+            </div>
+            <p className={styles.emptyText}>No courses match your search</p>
+            <button className={styles.emptyReset} onClick={()=>{setSearch("");setFilter("All");}}>
+              Reset filters
+            </button>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }
 
-function CourseCard({ course, onRegister, onDrop, remainingCredits }) {
-  const capacityPct  = Math.round((course.enrolled / course.capacity) * 100);
-  const isLocked     = course.status === "locked";
-  const isFull       = course.status === "full";
-  const isRegistered = course.status === "registered";
-  const canRegister  = course.credits <= remainingCredits;
-
-  const statusLabel = { available: "Available", registered: "Registered", full: "Full", locked: "Locked" }[course.status];
+/* ═══════════════════════════════════════════════════════════
+   COURSE CARD
+═══════════════════════════════════════════════════════════ */
+function CourseCard({ course, index, remaining, onRegister, onDrop }) {
+  const cfg    = STATUS_CFG[course.status];
+  const capPct = Math.round((course.enrolled / course.capacity) * 100);
+  const canReg = course.credits <= remaining;
+  const pat    = getPatternBg(course.pattern, course.color);
 
   return (
-    <div className={`${styles.card} ${styles[course.status]}`}>
-      <div className={styles.cardTop}>
-        <div className={styles.codeWrap}>
-          <span className={styles.code}>{course.code}</span>
-          {isLocked && (
-            <span className={styles.lockIcon}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    <motion.article
+      className={`${styles.card} ${styles[`card_${course.status}`]}`}
+      variants={fadeUp}
+      layout
+      whileHover={course.status!=="full"&&course.status!=="locked"
+        ? {y:-6, transition:{duration:0.2}}
+        : {scale:1.01}
+      }
+    >
+      {/* ── Cover ── */}
+      <div className={styles.cover}
+        style={{
+          background: course.color,
+          backgroundImage: pat,
+          backgroundSize: "64px 64px",
+        }}
+      >
+        <div className={styles.coverDark}/>
+
+        {/* Top row */}
+        <div className={styles.coverTop}>
+          <span className={styles.codeTag}>{course.code}</span>
+          <span className={styles.crTag}>{course.credits} cr</span>
+        </div>
+
+        {/* Status badge */}
+        <div className={styles.coverBot}>
+          <span className={styles.statusBadge}>
+            <span className={styles.statusDot} style={{background:cfg.color}}/>
+            {cfg.label}
+          </span>
+          {course.status==="registered" && (
+            <span className={styles.checkmark}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                <polyline points="20 6 9 17 4 12"/>
               </svg>
             </span>
           )}
-          <span className={`${styles.statusBadge} ${styles[`badge_${course.status}`]}`}>{statusLabel}</span>
+          {course.status==="locked" && (
+            <span className={styles.lockIcon}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2">
+                <rect x="3" y="11" width="18" height="11" rx="2"/>
+                <path d="M7 11V7a5 5 0 0110 0v4"/>
+              </svg>
+            </span>
+          )}
         </div>
-        <span className={styles.credits}>{course.credits} Credits</span>
       </div>
 
-      <h3 className={styles.courseName}>{course.name}</h3>
+      {/* ── Body ── */}
+      <div className={styles.cardBody}>
+        <h3 className={styles.courseName}>{course.name}</h3>
 
-      <div className={styles.infoList}>
-        <div className={styles.infoRow}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-          </svg>
-          <span>{course.instructor}</span>
-        </div>
-        <div className={styles.infoRow}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-          </svg>
-          <span>{course.schedule}</span>
-        </div>
-        <div className={styles.infoRow}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-          </svg>
-          <span>Capacity: {course.enrolled}/{course.capacity}</span>
-          <div className={styles.capBar}>
-            <div className={styles.capFill} style={{
-              width: `${capacityPct}%`,
-              background: capacityPct >= 90 ? "#ef4444" : capacityPct >= 70 ? "#f59e0b" : "#22c55e"
-            }}/>
+        <div className={styles.metaList}>
+          <div className={styles.metaRow}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span>{course.instructor}</span>
+          </div>
+          <div className={styles.metaRow}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <span>{course.schedule}</span>
           </div>
         </div>
-      </div>
 
-      {isLocked && (
-        <div className={styles.lockReason}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          {course.locked.reason}
+        {/* Capacity bar */}
+        <div className={styles.capRow}>
+          <div className={styles.capTrack}>
+            <motion.div className={styles.capFill}
+              initial={{width:0}}
+              animate={{width:`${capPct}%`}}
+              transition={{duration:0.9,ease:"easeOut",delay:index*0.04+0.3}}
+              style={{background:capPct>=95?"#ef4444":capPct>=75?"#f59e0b":"#22c55e"}}
+            />
+          </div>
+          <span className={styles.capLabel}>{course.enrolled}/{course.capacity}</span>
         </div>
-      )}
 
-      <div className={styles.cardAction}>
-        {isRegistered && (
-          <button className={styles.btnDrop} onClick={() => onDrop(course.id)}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="3 6 5 6 21 6"/>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+        {/* Prereq warning */}
+        {course.status==="locked" && course.prereqs?.length>0 && (
+          <div className={styles.prereq}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
             </svg>
-            Drop Course
-          </button>
+            Requires: {course.prereqs.join(", ")}
+          </div>
         )}
-        {course.status === "available" && (
-          <button
-            className={`${styles.btnRegister} ${!canRegister ? styles.btnDisabledCredit : ""}`}
-            onClick={() => onRegister(course.id)}
-            disabled={!canRegister}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            {canRegister ? "Register" : "Not Enough Credits"}
-          </button>
-        )}
-        {isFull   && <button className={styles.btnFull}   disabled>Course Full</button>}
-        {isLocked && (
-          <button className={styles.btnLocked} disabled>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
-            Locked
-          </button>
+
+        {/* Action button */}
+        <div className={styles.cardFoot}>
+          {course.status==="registered" && (
+            <motion.button className={styles.dropBtn} onClick={onDrop}
+              whileHover={{scale:1.02}} whileTap={{scale:0.97}}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+              </svg>
+              Drop Course
+            </motion.button>
+          )}
+          {course.status==="available" && (
+            <motion.button
+              className={`${styles.regBtn} ${!canReg?styles.regBtnDis:""}`}
+              onClick={canReg?onRegister:undefined}
+              disabled={!canReg}
+              whileHover={canReg?{scale:1.02}:{}}
+              whileTap={canReg?{scale:0.97}:{}}
+            >
+              {canReg ? (
+                <>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                  Register
+                </>
+              ) : "Not Enough Credits"}
+            </motion.button>
+          )}
+          {course.status==="full" && (
+            <div className={styles.fullBtn}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+              </svg>
+              Section Full
+            </div>
+          )}
+          {course.status==="locked" && (
+            <div className={styles.lockedBtn}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="11" width="18" height="11" rx="2"/>
+                <path d="M7 11V7a5 5 0 0110 0v4"/>
+              </svg>
+              Prerequisite Required
+            </div>
+          )}
+        </div>
+      </div>
+    </motion.article>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CLOSED STATE
+═══════════════════════════════════════════════════════════ */
+function ClosedState({ regWindow }) {
+  return (
+    <motion.div className={styles.closed}
+      initial={{opacity:0,y:32}} animate={{opacity:1,y:0}}
+      transition={{duration:0.55,ease:[0.22,1,0.36,1]}}>
+
+      <div className={styles.closedOrb}>
+        <div className={styles.closedLock}>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2"/>
+            <path d="M7 11V7a5 5 0 0110 0v4"/>
+          </svg>
+        </div>
+      </div>
+
+      <div className={styles.closedText}>
+        <h2 className={styles.closedTitle}>Registration Closed</h2>
+        <p className={styles.closedSub}>
+          Course registration is currently unavailable.<br/>
+          The administration will open it soon.
+        </p>
+      </div>
+
+      <div className={styles.closedInfo}>
+        <div className={styles.closedInfoItem}>
+          <span className={styles.closedInfoLabel}>Academic Year</span>
+          <span className={styles.closedInfoVal}>{regWindow?.academicYear || "2025/2026"}</span>
+        </div>
+        <div className={styles.closedInfoDiv}/>
+        <div className={styles.closedInfoItem}>
+          <span className={styles.closedInfoLabel}>Semester</span>
+          <span className={styles.closedInfoVal}>{regWindow?.semester || "Semester 1"}</span>
+        </div>
+        {regWindow?.startDate && (
+          <>
+            <div className={styles.closedInfoDiv}/>
+            <div className={styles.closedInfoItem}>
+              <span className={styles.closedInfoLabel}>Opens On</span>
+              <span className={styles.closedInfoVal}>
+                {new Date(regWindow.startDate).toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}
+              </span>
+            </div>
+          </>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

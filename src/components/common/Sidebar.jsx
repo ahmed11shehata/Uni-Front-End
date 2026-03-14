@@ -50,10 +50,11 @@ const NAV = {
   ],
   admin: [
     { label: "Home",          path: "/admin/dashboard",    icon: IC.home,     badge: null },
-    { label: "Schedule",      path: "/admin/schedule",     icon: IC.schedule, badge: null },
-    { label: "Register User", path: "/admin/register",     icon: IC.register, badge: null },
-    { label: "Manage Users",  path: "/admin/manage-users", icon: IC.users,    badge: null },
-    { label: "Themes",        path: "/admin/themes",       icon: IC.themes,   badge: null },
+    { label: "Manage Users",    path: "/admin/manage-users",   icon: IC.users,    badge: null },
+    { label: "Registration",    path: "/admin/registration",   icon: IC.register, badge: null },
+    { label: "Email Manager",   path: "/admin/email-manager",  icon: IC.courses,  badge: null },
+    { label: "Schedule",        path: "/admin/schedule",       icon: IC.schedule, badge: null },
+    { label: "Themes",          path: "/admin/themes",         icon: IC.themes,   badge: null },
   ],
 };
 

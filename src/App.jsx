@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { NotificationProvider } from "./context/NotificationContext";
+import { RegistrationProvider } from "./context/RegistrationContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import MainLayout from "./components/layout/MainLayout";
 import RamadanAtmosphere from "./components/common/RamadanAtmosphere";
@@ -42,6 +43,10 @@ import GradesMgmtPage      from "./pages/instructor/GradesMgmtPage";
 import AdminDashboard   from "./pages/admin/AdminDashboard";
 import RegisterUserPage from "./pages/admin/RegisterUserPage";
 import ManageUsers      from "./pages/admin/ManageUsers";
+import AdminCoursesPage from "./pages/admin/AdminCoursesPage";
+import RegistrationManagerPage from "./pages/admin/RegistrationManagerPage";
+import RegisterEmailPage      from "./pages/admin/RegisterEmailPage";
+import AdminSchedulePage      from "./pages/admin/AdminSchedulePage";
 import SchedulePage           from "./pages/student/SchedulePage";
 
 export default function App() {
@@ -49,6 +54,7 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <NotificationProvider>
+          <RegistrationProvider>
           <BrowserRouter>
             <Toaster position="top-center" toastOptions={{ style: { fontFamily: "Sora" } }} />
             <RamadanAtmosphere />
@@ -99,9 +105,12 @@ export default function App() {
               {/* ── Admin ── */}
               <Route element={<ProtectedRoute allowedRoles={["admin"]}><MainLayout /></ProtectedRoute>}>
                 <Route path="/admin/dashboard"    element={<AdminDashboard />} />
-                <Route path="/admin/schedule"       element={<SchedulePage />} />
                 <Route path="/admin/register"     element={<RegisterUserPage />} />
                 <Route path="/admin/manage-users" element={<ManageUsers />} />
+                <Route path="/admin/courses"      element={<AdminCoursesPage />} />
+                <Route path="/admin/registration"  element={<RegistrationManagerPage />} />
+                <Route path="/admin/email-manager"  element={<RegisterEmailPage />} />
+                <Route path="/admin/schedule"       element={<AdminSchedulePage />} />
                 <Route path="/admin/themes"       element={<ThemePage />} />
                 <Route path="/admin/profile"       element={<ProfilePage />} />
               </Route>
@@ -110,6 +119,7 @@ export default function App() {
 
             </Routes>
           </BrowserRouter>
+          </RegistrationProvider>
         </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>
