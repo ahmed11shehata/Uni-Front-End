@@ -491,6 +491,30 @@ function AssignmentsTab({ initialAssignments, color, meta }) {
         })}
       </div>
 
+      {/* ── Total Score Bar ── */}
+      {(() => {
+        const graded = list.filter(a => a.grade !== null);
+        const total = graded.reduce((s,a) => s + a.grade, 0);
+        const max   = graded.reduce((s,a) => s + a.max, 0);
+        const pct   = max > 0 ? Math.round(total/max*100) : 0;
+        const barC  = pct >= 80 ? "#22c55e" : pct >= 60 ? "#f59e0b" : "#ef4444";
+        return max > 0 ? (
+          <div className={styles.tabTotalBar} style={{borderColor:`${color}20`,background:`${color}06`}}>
+            <span className={styles.tabTotalLabel}>📊 Total Assignment Score</span>
+            <div className={styles.tabTotalRight}>
+              <span className={styles.tabTotalNum} style={{color}}>{total}</span>
+              <span className={styles.tabTotalMax}> / {max} pts</span>
+              <div className={styles.tabTotalTrack}>
+                <motion.div className={styles.tabTotalFill} style={{background:barC}}
+                  initial={{width:0}} animate={{width:`${pct}%`}}
+                  transition={{duration:0.9,ease:"easeOut",delay:0.3}}/>
+              </div>
+              <span className={styles.tabTotalPct} style={{color:barC}}>{pct}%</span>
+            </div>
+          </div>
+        ) : null;
+      })()}
+
       <AnimatePresence>
         {uploadAsn && (
           <motion.div className={styles.uploadModal}
@@ -612,172 +636,334 @@ function QuizzesTab({ quizzes, color, courseId }) {
           </motion.div>
         ))}
       </div>
+
+      {/* ── Total Score Bar ── */}
+      {(() => {
+        const done  = quizzes.filter(q => q.score !== null);
+        const total = done.reduce((s,q) => s + q.score, 0);
+        const max   = done.reduce((s,q) => s + q.max, 0);
+        const pct   = max > 0 ? Math.round(total/max*100) : 0;
+        const barC  = pct >= 80 ? "#22c55e" : pct >= 60 ? "#f59e0b" : "#ef4444";
+        return max > 0 ? (
+          <div className={styles.tabTotalBar} style={{borderColor:`${color}20`,background:`${color}06`}}>
+            <span className={styles.tabTotalLabel}>📊 Total Quiz Score</span>
+            <div className={styles.tabTotalRight}>
+              <span className={styles.tabTotalNum} style={{color}}>{total}</span>
+              <span className={styles.tabTotalMax}> / {max} pts</span>
+              <div className={styles.tabTotalTrack}>
+                <motion.div className={styles.tabTotalFill} style={{background:barC}}
+                  initial={{width:0}} animate={{width:`${pct}%`}}
+                  transition={{duration:0.9,ease:"easeOut",delay:0.3}}/>
+              </div>
+              <span className={styles.tabTotalPct} style={{color:barC}}>{pct}%</span>
+            </div>
+          </div>
+        ) : null;
+      })()}
     </div>
   );
 }
 
 
 /* ════════════════════════════════════════
-   GRADES TAB
+   GRADES TAB — Side nav + detail panel
 ════════════════════════════════════════ */
+
+/* Mock midterm data */
+const MIDTERM_DATA = {
+  date: "March 20, 2026",
+  time: "10:00 AM – 12:00 PM",
+  room: "Hall 144 · Building B",
+  published: true,
+  grade: 17,
+  max:   20,
+};
+
 function GradesTab({ quizzes, assignments, color }) {
-  // Compute totals
-  const gradedQuizzes   = quizzes.filter(q => q.score !== null);
-  const quizTotal       = gradedQuizzes.reduce((s, q) => s + q.score, 0);
-  const quizMax         = gradedQuizzes.reduce((s, q) => s + q.max, 0);
-  const gradedAsn       = assignments.filter(a => a.grade !== null);
-  const asnTotal        = gradedAsn.reduce((s, a) => s + a.grade, 0);
-  const asnMax          = gradedAsn.reduce((s, a) => s + a.max, 0);
+  const [active, setActive] = useState("midterm");
 
-  function ScoreBar({ val, max, c, delay }) {
-    const pct = max > 0 ? Math.round((val / max) * 100) : 0;
-    return (
-      <div className={styles.gradeBarRow}>
-        <div className={styles.gradeBarTrack}>
-          <motion.div className={styles.gradeBarFill}
-            style={{ background: c }}
-            initial={{ width: 0 }}
-            animate={{ width: `${pct}%` }}
-            transition={{ delay, duration: 0.75, ease: "easeOut" }}/>
-        </div>
-        <span className={styles.gradeBarPct} style={{ color: c }}>{pct}%</span>
-      </div>
-    );
-  }
+  const gradedAsn  = assignments.filter(a => a.grade !== null);
+  const asnTotal   = gradedAsn.reduce((s,a) => s + a.grade, 0);
+  const asnMax     = gradedAsn.reduce((s,a) => s + a.max, 0);
 
-  function letterFromPct(_pct) { return {}; } // unused — kept for future
+  const gradedQuiz = quizzes.filter(q => q.score !== null);
+  const quizTotal  = gradedQuiz.reduce((s,q) => s + q.score, 0);
+  const quizMax    = gradedQuiz.reduce((s,q) => s + q.max, 0);
+
+  const midPct = MIDTERM_DATA.published
+    ? Math.round(MIDTERM_DATA.grade / MIDTERM_DATA.max * 100)
+    : null;
+  const midC = midPct >= 80 ? "#22c55e" : midPct >= 60 ? "#f59e0b" : "#ef4444";
+
+  const tabs = [
+    {
+      key: "midterm",
+      icon: "📝",
+      label: "Midterm",
+      val: MIDTERM_DATA.published ? `${MIDTERM_DATA.grade}/${MIDTERM_DATA.max}` : "—",
+      sub: MIDTERM_DATA.published ? `${midPct}%` : "Not released",
+    },
+    {
+      key: "assignments",
+      icon: "📋",
+      label: "Assignments",
+      val: `${asnTotal}/${asnMax}`,
+      sub: `${gradedAsn.length}/${assignments.length} graded`,
+    },
+    {
+      key: "quizzes",
+      icon: "✏️",
+      label: "Quizzes",
+      val: `${quizTotal}/${quizMax}`,
+      sub: `${gradedQuiz.length}/${quizzes.length} done`,
+    },
+  ];
 
   return (
-    <div className={styles.tabBody}>
+    <div className={styles.gradesWrap}>
 
-      {/* ── Summary cards ── */}
-      <div className={styles.gradeSummaryGrid}>
-        {[
-          { label: "Quizzes", earned: quizTotal, max: quizMax, icon: "📝", pending: quizzes.length - gradedQuizzes.length },
-          { label: "Assignments", earned: asnTotal, max: asnMax, icon: "📋", pending: assignments.filter(a=>a.status==="pending").length },
-        ].map((s, i) => {
-          const pct = s.max > 0 ? Math.round((s.earned / s.max) * 100) : 0;
-          return (
-            <motion.div key={i} className={styles.gradeSumCard}
-              style={{ borderColor: `${color}25` }}
-              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.09 }}>
-              <div className={styles.gradeSumTop}>
-                <span className={styles.gradeSumIcon}>{s.icon}</span>
-                <span className={styles.gradeSumLabel}>{s.label}</span>
-                {s.pending > 0 && (
-                  <span className={styles.pendingPill}>{s.pending} pending</span>
-                )}
-              </div>
-              <div className={styles.gradeSumScore}>
-                <span className={styles.gradeSumEarned} style={{ color }}>
-                  {s.max > 0 ? s.earned : "—"}
-                </span>
-                {s.max > 0 && <span className={styles.gradeSumMax}>/{s.max}</span>}
-              </div>
-              {s.max > 0 && <ScoreBar val={s.earned} max={s.max} c={color} delay={0.15 + i * 0.09}/>}
+      {/* ── Top tab selector ── */}
+      <div className={styles.gradesTabs}>
+        {tabs.map(t => (
+          <motion.button key={t.key}
+            className={`${styles.gradesTab} ${active===t.key ? styles.gradesTabOn : ""}`}
+            style={active===t.key ? {"--gt": color} : {}}
+            onClick={() => setActive(t.key)}
+            whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}>
+            <motion.div className={styles.gradesTabBar}
+              style={{ background: color }}
+              animate={{ scaleX: active===t.key ? 1 : 0 }}
+              transition={{ duration: 0.24, ease: [0.22,1,0.36,1] }}/>
+            <span className={styles.gradesTabIcon}>{t.icon}</span>
+            <div className={styles.gradesTabCenter}>
+              <span className={styles.gradesTabLabel}>{t.label}</span>
+            </div>
+            <div className={styles.gradesTabRight}>
+              <span className={styles.gradesTabVal} style={active===t.key?{color}:{}}>{t.val}</span>
+              <span className={styles.gradesTabSub}>{t.sub}</span>
+            </div>
+          </motion.button>
+        ))}
+      </div>
+
+      {/* ── Content area ── */}
+      <div className={styles.gradesContent}>
+        <AnimatePresence mode="wait">
+
+          {/* MIDTERM */}
+          {active==="midterm" && (
+            <motion.div key="mid"
+              initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.22 }}>
+
+              {!MIDTERM_DATA.published ? (
+                <div className={styles.gradesNotPublished}>
+                  <span>🔒</span>
+                  <h3>Grade Not Published Yet</h3>
+                  <p>Check back after the exam results are released</p>
+                </div>
+              ) : (
+                <div className={styles.midtermFull}>
+
+                  {/* Hero grade row */}
+                  <div className={styles.midHero} style={{ borderColor: `${midC}30` }}>
+                    {/* Big circle */}
+                    <div className={styles.midHeroCircleWrap}>
+                      <svg viewBox="0 0 120 120" className={styles.midHeroSvg}>
+                        <circle cx="60" cy="60" r="52" fill="none"
+                          stroke="var(--prog-track)" strokeWidth="8"/>
+                        <motion.circle cx="60" cy="60" r="52" fill="none"
+                          stroke={midC} strokeWidth="8"
+                          strokeLinecap="round"
+                          strokeDasharray={`${327}`}
+                          initial={{ strokeDashoffset: 327 }}
+                          animate={{ strokeDashoffset: 327 - 327 * (midPct/100) }}
+                          transition={{ duration: 1.1, ease: "easeOut", delay: 0.15 }}
+                          style={{ transform: "rotate(-90deg)", transformOrigin: "60px 60px" }}/>
+                      </svg>
+                      <div className={styles.midHeroCircleInner}>
+                        <span className={styles.midHeroGrade} style={{ color: midC }}>
+                          {MIDTERM_DATA.grade}
+                        </span>
+                        <span className={styles.midHeroMax}>/{MIDTERM_DATA.max}</span>
+                      </div>
+                    </div>
+
+                    {/* Grade info */}
+                    <div className={styles.midHeroInfo}>
+                      <div className={styles.midHeroPct} style={{ color: midC }}>{midPct}%</div>
+                      <div className={styles.midHeroLabel}>Midterm Score</div>
+                      <div className={styles.midHeroBar}>
+                        <div className={styles.midHeroBarTrack}>
+                          <motion.div className={styles.midHeroBarFill}
+                            style={{ background: midC }}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${midPct}%` }}
+                            transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}/>
+                        </div>
+                      </div>
+                      <div className={styles.midHeroRemark} style={{
+                        color: midPct>=80?"#15803d":midPct>=60?"#92400e":"#b91c1c",
+                        background: midPct>=80?"#f0fdf4":midPct>=60?"#fef9c3":"#fef2f2",
+                        border: `1px solid ${midPct>=80?"#bbf7d0":midPct>=60?"#fde68a":"#fecaca"}`,
+                      }}>
+                        {midPct>=80?"Excellent ⭐":midPct>=60?"Good 👍":"Needs Improvement ⚠"}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Exam details grid */}
+                  <div className={styles.midDetails}>
+                    {[
+                      { ico: "📅", label: "Date",  val: MIDTERM_DATA.date },
+                      { ico: "⏰", label: "Time",  val: MIDTERM_DATA.time },
+                      { ico: "🏛",  label: "Room",  val: MIDTERM_DATA.room },
+                      { ico: "⭐", label: "Score", val: `${MIDTERM_DATA.grade} out of ${MIDTERM_DATA.max} points` },
+                    ].map((d,i) => (
+                      <motion.div key={d.label} className={styles.midDetailCard}
+                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 + i*0.06 }}>
+                        <span className={styles.midDetailIco}>{d.ico}</span>
+                        <div>
+                          <div className={styles.midDetailLabel}>{d.label}</div>
+                          <div className={styles.midDetailVal}>{d.val}</div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </motion.div>
-          );
-        })}
-      </div>
+          )}
 
-      {/* ── Quizzes breakdown ── */}
-      <div className={styles.gradeSection}>
-        <div className={styles.gradeSectionHeader}>
-          <span className={styles.gradeSectionTitle}>📝 Quiz Breakdown</span>
-          <span className={styles.gradeSectionTotal} style={{ color }}>
-            {quizTotal}/{quizMax} pts
-          </span>
-        </div>
-        <div className={styles.gradeItemList}>
-          {quizzes.map((q, i) => {
-            const pct = q.score !== null ? Math.round((q.score / q.max) * 100) : null;
-            const barC = pct === null ? "#cbd5e1" : pct >= 80 ? "#22c55e" : pct >= 60 ? "#f59e0b" : "#ef4444";
-            return (
-              <motion.div key={q.id} className={styles.gradeItem}
-                initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.06 }}>
-                <div className={styles.gradeItemLeft}>
-                  <span className={styles.gradeItemName}>{q.title}</span>
-                  <span className={styles.gradeItemDate}>📅 {q.date}</span>
+          {/* ASSIGNMENTS */}
+          {active==="assignments" && (
+            <motion.div key="asn"
+              initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.22 }}>
+
+              {/* Total banner */}
+              <div className={styles.gradesBanner} style={{ borderColor:`${color}25`, background:`${color}07` }}>
+                <div className={styles.gradesBannerLeft}>
+                  <span className={styles.gradesBannerIcon}>📋</span>
+                  <div>
+                    <div className={styles.gradesBannerTitle}>Assignment Grades</div>
+                    <div className={styles.gradesBannerSub}>{gradedAsn.length} of {assignments.length} graded</div>
+                  </div>
                 </div>
-                {pct !== null ? (
-                  <>
-                    <div className={styles.gradeItemBar}>
-                      <div className={styles.gradeBarTrack}>
-                        <motion.div className={styles.gradeBarFill}
-                          style={{ background: barC }}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${pct}%` }}
-                          transition={{ delay: 0.1 + i * 0.06, duration: 0.7 }}/>
-                      </div>
-                    </div>
-                    <span className={styles.gradeItemScore} style={{ color: barC }}>
-                      {q.score}/{q.max}
-                    </span>
-                  </>
-                ) : (
-                  <span className={styles.gradeItemNA}>
-                    {q.status === "upcoming" ? "⏳ Upcoming" : "🔓 Available"}
-                  </span>
-                )}
-              </motion.div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ── Assignments breakdown ── */}
-      <div className={styles.gradeSection}>
-        <div className={styles.gradeSectionHeader}>
-          <span className={styles.gradeSectionTitle}>📋 Assignment Grades</span>
-          <span className={styles.gradeSectionTotal} style={{ color }}>
-            {asnTotal}/{asnMax} pts
-          </span>
-        </div>
-        <div className={styles.gradeItemList}>
-          {assignments.map((a, i) => {
-            const pct = a.grade !== null ? Math.round((a.grade / a.max) * 100) : null;
-            const barC = pct === null ? "#cbd5e1" : pct >= 80 ? "#22c55e" : pct >= 60 ? "#f59e0b" : "#ef4444";
-            return (
-              <motion.div key={a.id} className={styles.gradeItem}
-                initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.06 }}>
-                <div className={styles.gradeItemLeft}>
-                  <span className={styles.gradeItemName}>{a.title}</span>
-                  <span className={styles.gradeItemDate}>📅 Due {a.deadline}</span>
+                <div className={styles.gradesBannerScore}>
+                  <span className={styles.gradesBannerNum} style={{ color }}>{asnTotal}</span>
+                  <span className={styles.gradesBannerMax}>/ {asnMax} pts</span>
                 </div>
-                {pct !== null ? (
-                  <>
-                    <div className={styles.gradeItemBar}>
-                      <div className={styles.gradeBarTrack}>
-                        <motion.div className={styles.gradeBarFill}
-                          style={{ background: barC }}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${pct}%` }}
-                          transition={{ delay: 0.1 + i * 0.06, duration: 0.7 }}/>
-                      </div>
-                    </div>
-                    <span className={styles.gradeItemScore} style={{ color: barC }}>
-                      {a.grade}/{a.max}
-                    </span>
-                  </>
-                ) : (
-                  <span className={styles.gradeItemNA}
-                    style={{ background: a.status === "pending" ? "#fffbeb" : "#f8fafc",
-                             color: a.status === "pending" ? "#d97706" : "#94a3b8" }}>
-                    {a.status === "pending" ? "⏰ Pending" : "🔒 Upcoming"}
-                  </span>
-                )}
-              </motion.div>
-            );
-          })}
-        </div>
-      </div>
+              </div>
 
+              <div className={styles.gradesList}>
+                {assignments.map((a, i) => {
+                  const pct  = a.grade !== null ? Math.round(a.grade/a.max*100) : null;
+                  const barC = pct === null ? "var(--border)" : pct>=80?"#22c55e":pct>=60?"#f59e0b":"#ef4444";
+                  return (
+                    <motion.div key={a.id} className={styles.gradesItem}
+                      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.055 }}>
+                      <div className={styles.gradesItemInfo}>
+                        <div className={styles.gradesItemName}>{a.title}</div>
+                        <div className={styles.gradesItemSub}>📅 Due {a.deadline}</div>
+                      </div>
+                      {pct !== null ? (
+                        <div className={styles.gradesItemRight}>
+                          <div className={styles.gradesItemBarWrap}>
+                            <div className={styles.gradesItemBar}>
+                              <motion.div style={{ background: barC, height: "100%", borderRadius: 99 }}
+                                initial={{ width: 0 }}
+                                animate={{ width: `${pct}%` }}
+                                transition={{ delay: 0.12 + i*0.05, duration: 0.75 }}/>
+                            </div>
+                            <span className={styles.gradesItemPct} style={{ color: barC }}>{pct}%</span>
+                          </div>
+                          <span className={styles.gradesItemScore} style={{ color: barC }}>
+                            {a.grade}<span className={styles.gradesItemScoreMax}>/{a.max}</span>
+                          </span>
+                        </div>
+                      ) : (
+                        <span className={styles.gradesItemNA}
+                          style={{ color:a.status==="pending"?"#d97706":"#94a3b8",
+                                   background:a.status==="pending"?"#fef9c3":"var(--hover-bg)" }}>
+                          {a.status==="pending"?"⏰ Pending":"🔒 Upcoming"}
+                        </span>
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+
+          {/* QUIZZES */}
+          {active==="quizzes" && (
+            <motion.div key="quiz"
+              initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.22 }}>
+
+              {/* Total banner */}
+              <div className={styles.gradesBanner} style={{ borderColor:`${color}25`, background:`${color}07` }}>
+                <div className={styles.gradesBannerLeft}>
+                  <span className={styles.gradesBannerIcon}>✏️</span>
+                  <div>
+                    <div className={styles.gradesBannerTitle}>Quiz Grades</div>
+                    <div className={styles.gradesBannerSub}>{gradedQuiz.length} of {quizzes.length} completed</div>
+                  </div>
+                </div>
+                <div className={styles.gradesBannerScore}>
+                  <span className={styles.gradesBannerNum} style={{ color }}>{quizTotal}</span>
+                  <span className={styles.gradesBannerMax}>/ {quizMax} pts</span>
+                </div>
+              </div>
+
+              <div className={styles.gradesList}>
+                {quizzes.map((q, i) => {
+                  const pct  = q.score !== null ? Math.round(q.score/q.max*100) : null;
+                  const barC = pct === null ? "var(--border)" : pct>=80?"#22c55e":pct>=60?"#f59e0b":"#ef4444";
+                  return (
+                    <motion.div key={q.id} className={styles.gradesItem}
+                      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.055 }}>
+                      <div className={styles.gradesItemInfo}>
+                        <div className={styles.gradesItemName}>{q.title}</div>
+                        <div className={styles.gradesItemSub}>📅 {q.date} · ⏱ {q.duration}</div>
+                      </div>
+                      {pct !== null ? (
+                        <div className={styles.gradesItemRight}>
+                          <div className={styles.gradesItemBarWrap}>
+                            <div className={styles.gradesItemBar}>
+                              <motion.div style={{ background: barC, height: "100%", borderRadius: 99 }}
+                                initial={{ width: 0 }}
+                                animate={{ width: `${pct}%` }}
+                                transition={{ delay: 0.12 + i*0.05, duration: 0.75 }}/>
+                            </div>
+                            <span className={styles.gradesItemPct} style={{ color: barC }}>{pct}%</span>
+                          </div>
+                          <span className={styles.gradesItemScore} style={{ color: barC }}>
+                            {q.score}<span className={styles.gradesItemScoreMax}>/{q.max}</span>
+                          </span>
+                        </div>
+                      ) : (
+                        <span className={styles.gradesItemNA}>
+                          {q.status==="upcoming"?"⏳ Upcoming":"🔓 Available"}
+                        </span>
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
+
 
 /* ════════════════════════════════════════
    MAIN PAGE

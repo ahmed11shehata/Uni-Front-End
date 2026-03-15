@@ -38,6 +38,7 @@ import InstructorDashboard from "./pages/instructor/InstructorDashboard";
 import QuizBuilderPage     from "./pages/instructor/QuizBuilderPage";
 import AssignmentMgmtPage  from "./pages/instructor/AssignmentMgmtPage";
 import LectureUploadPage   from "./pages/instructor/LectureUploadPage";
+import UploadMaterialPage  from "./pages/instructor/UploadMaterialPage";
 import GradesMgmtPage      from "./pages/instructor/GradesMgmtPage";
 
 import AdminDashboard   from "./pages/admin/AdminDashboard";
@@ -97,6 +98,7 @@ export default function App() {
                 <Route path="/instructor/quiz-builder" element={<QuizBuilderPage />} />
                 <Route path="/instructor/assignments"  element={<AssignmentMgmtPage />} />
                 <Route path="/instructor/lectures"     element={<LectureUploadPage />} />
+                <Route path="/instructor/material"     element={<UploadMaterialPage />} />
                 <Route path="/instructor/grades"       element={<GradesMgmtPage />} />
                 <Route path="/instructor/themes"       element={<ThemePage />} />
                 <Route path="/instructor/profile"       element={<ProfilePage />} />

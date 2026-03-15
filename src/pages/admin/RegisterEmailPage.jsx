@@ -175,12 +175,10 @@ export default function RegisterEmailPage() {
 
         {/* Left: branding */}
         <div className={styles.headerLeft}>
-          <motion.div className={styles.atBadge}
-            animate={{rotate:[0,5,-5,0]}}
-            transition={{duration:6,repeat:Infinity,ease:"easeInOut"}}>
+          <div className={styles.atBadge}>
             <span>@</span>
             <div className={styles.atBadgeRing}/>
-          </motion.div>
+          </div>
           <div>
             <h1 className={styles.pageTitle}>Email Manager</h1>
             <p className={styles.pageDomain}>{DOMAIN.slice(1)}</p>
@@ -202,14 +200,22 @@ export default function RegisterEmailPage() {
               transition={{delay:0.12+i*0.07, ...spring}}
               whileHover={{y:-3}}
               whileTap={{scale:0.94}}>
+
+              {/* Color dot */}
+              <div className={styles.statDot} style={{background:s.c}}/>
+
+              {/* Count */}
               <motion.span className={styles.statN}
                 key={s.n}
-                initial={{opacity:0,y:-8}}
+                initial={{opacity:0,y:-6}}
                 animate={{opacity:1,y:0}}
                 transition={spring}>
                 {s.n}
               </motion.span>
+
               <span className={styles.statL}>{s.l}</span>
+
+              {/* Active underline */}
               {filterPanel===s.key && (
                 <motion.div className={styles.statActiveBar}
                   layoutId="statBar"
@@ -352,6 +358,21 @@ export default function RegisterEmailPage() {
 
                       {/* Actions */}
                       <div className={styles.fpActions}>
+                        {/* View profile */}
+                        <motion.button className={styles.fpViewBtn}
+                          onClick={()=>{
+                            setSearchCode(acc.code);
+                            setResult(acc);
+                            setMode("found");
+                            setFilterPanel(null);
+                          }}
+                          whileHover={{scale:1.04,y:-1}} whileTap={{scale:0.96}}
+                          title="View full profile"
+                          style={{"--vc": r.color}}>
+                          {I.eye}
+                          <span>View</span>
+                        </motion.button>
+
                         {/* Copy email */}
                         <motion.button className={`${styles.fpCopyBtn} ${copiedThis?styles.fpCopyDone:""}`}
                           onClick={()=>copyText(em,`panel-${acc.id}`)}
@@ -388,39 +409,39 @@ export default function RegisterEmailPage() {
           {/* ── HOME ── */}
           {mode==="home" && !filterPanel && (
             <motion.div key="home" className={styles.homeState}
-              initial={{opacity:0,scale:0.95}} animate={{opacity:1,scale:1}} exit={{opacity:0,scale:0.95}}
-              transition={{duration:0.35}}>
-              <div className={styles.homeOrb}>
-                <motion.div className={styles.homeOrbRing1}
-                  animate={{rotate:360}} transition={{duration:16,repeat:Infinity,ease:"linear"}}/>
-                <motion.div className={styles.homeOrbRing2}
-                  animate={{rotate:-360}} transition={{duration:24,repeat:Infinity,ease:"linear"}}/>
-                <div className={styles.homeOrbCore}>
-                  <motion.span
-                    animate={{scale:[1,1.08,1]}}
-                    transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}>@</motion.span>
-                </div>
-                {ROLES.map((r,i) => {
-                  const angle = (i/3)*Math.PI*2 - Math.PI/2;
-                  return (
-                    <motion.div key={r.key} className={styles.homeOrbDot}
-                      style={{
-                        background:r.color,
-                        left:`calc(50% + ${Math.cos(angle)*72}px - 8px)`,
-                        top:`calc(50% + ${Math.sin(angle)*72}px - 8px)`,
-                      }}
-                      animate={{scale:[1,1.4,1],opacity:[0.7,1,0.7]}}
-                      transition={{duration:2+i*0.5,repeat:Infinity,delay:i*0.4}}/>
-                  );
-                })}
+              initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+              transition={{duration:0.22}}>
+
+              {/* Clean envelope illustration */}
+              <div className={styles.homeIllus}>
+                <svg viewBox="0 0 120 88" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.homeIllusSvg}>
+                  {/* Shadow */}
+                  <ellipse cx="60" cy="84" rx="36" ry="4" fill="var(--border)" opacity="0.5"/>
+                  {/* Envelope body */}
+                  <rect x="8" y="16" width="104" height="64" rx="10" fill="var(--card-bg)" stroke="var(--border)" strokeWidth="2"/>
+                  {/* Envelope flap */}
+                  <path d="M8 26 L60 54 L112 26" stroke="var(--border)" strokeWidth="2" fill="none" strokeLinejoin="round"/>
+                  {/* Left fold */}
+                  <path d="M8 80 L42 52" stroke="var(--border)" strokeWidth="1.5" opacity="0.5"/>
+                  {/* Right fold */}
+                  <path d="M112 80 L78 52" stroke="var(--border)" strokeWidth="1.5" opacity="0.5"/>
+                  {/* @ badge on flap */}
+                  <circle cx="60" cy="38" r="14" fill="#818cf8"/>
+                  <text x="60" y="43" textAnchor="middle" fill="white" fontSize="14" fontWeight="900" fontFamily="monospace">@</text>
+                  {/* Role dots */}
+                  <circle cx="28" cy="70" r="5" fill="#818cf8" opacity="0.7"/>
+                  <circle cx="60" cy="74" r="4" fill="#22c55e" opacity="0.7"/>
+                  <circle cx="92" cy="70" r="5" fill="#f59e0b" opacity="0.7"/>
+                </svg>
               </div>
+
               <p className={styles.homeTitle}>Search an account</p>
-              <p className={styles.homeSub}>Enter a code above or click a stat to browse accounts</p>
+              <p className={styles.homeSub}>Enter a code above · or click a stat button to browse</p>
               <div className={styles.homeSamples}>
                 {["2203119","INS001","ADM001","2203122"].map(c=>(
                   <motion.button key={c} className={styles.sampleChip}
-                    onClick={()=>{setSearchCode(c);}}
-                    whileHover={{y:-3,scale:1.04}} whileTap={{scale:0.96}}>
+                    onClick={()=>setSearchCode(c)}
+                    whileHover={{y:-2}} whileTap={{scale:0.96}}>
                     {c}
                   </motion.button>
                 ))}
@@ -627,142 +648,204 @@ export default function RegisterEmailPage() {
           {/* ── CREATE ── */}
           {mode==="create" && (
             <motion.div key="create"
-              initial={{opacity:0,y:24}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-12}}
-              transition={{duration:0.38,ease:[0.22,1,0.36,1]}}>
+              initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+              transition={{duration:0.18}}>
 
-              <button className={styles.backBtn}
-                onClick={()=>createStep===2?setCreateStep(1):setMode("home")}>
-                {I.back} {createStep===2?"Choose Role":"Back"}
-              </button>
+              <div className={styles.createWrap}>
 
-              {/* Step indicator */}
-              <div className={styles.stepIndicator}>
-                {[1,2].map(s=>(
-                  <div key={s} className={`${styles.stepDot} ${createStep>=s?styles.stepDotOn:""}`}
-                    style={createStep>=s?{background:ROLES.find(r=>r.key===createRole)?.color}:{}}>
-                    {createStep>s ? I.check : s}
-                  </div>
-                ))}
-                <div className={`${styles.stepLine} ${createStep>1?styles.stepLineOn:""}`}
-                  style={createStep>1?{background:ROLES.find(r=>r.key===createRole)?.color}:{}}/>
-              </div>
+                {/* ── Left panel: steps sidebar ── */}
+                <div className={styles.createSidebar}>
+                  <button className={styles.backBtn}
+                    onClick={()=>createStep===2?setCreateStep(1):setMode("home")}>
+                    {I.back} {createStep===2?"Role":"Back"}
+                  </button>
 
-              <AnimatePresence mode="wait">
-                {/* Step 1: Role */}
-                {createStep===1 && (
-                  <motion.div key="s1" className={styles.createPanel}
-                    initial={{opacity:0,x:32}} animate={{opacity:1,x:0}} exit={{opacity:0,x:-24}}
-                    transition={{duration:0.3}}>
-                    <h2 className={styles.createTitle}>Choose Account Type</h2>
-                    <p className={styles.createSub}>Select the role for the new account</p>
-                    <div className={styles.roleGrid}>
-                      {ROLES.map(r => (
-                        <motion.button key={r.key}
-                          className={`${styles.roleCard} ${createRole===r.key?styles.roleCardOn:""}`}
-                          style={{"--rc":r.color,"--rcd":r.dark}}
-                          onClick={()=>setCreateRole(r.key)}
-                          whileHover={{y:-5}} whileTap={{scale:0.97}}>
-                          <div className={styles.roleCardIcon}>{r.icon}</div>
-                          <div className={styles.roleCardName}>{r.label}</div>
-                          <div className={styles.roleCardPrefix} style={{color:r.color}}>
-                            <strong>{r.prefix}-</strong>code·Name
+                  <div className={styles.createSideTitle}>New Account</div>
+
+                  {/* Vertical stepper */}
+                  <div className={styles.vStepper}>
+                    {[
+                      {n:1, label:"Account Type",  desc:"Student, Instructor or Admin"},
+                      {n:2, label:"Account Details",desc:"Code, name & password"},
+                    ].map((s,i) => {
+                      const active = createStep === s.n;
+                      const done   = createStep > s.n;
+                      const rc = ROLES.find(r=>r.key===createRole);
+                      return (
+                        <div key={s.n} className={styles.vStepItem}>
+                          {/* Connector line */}
+                          {i > 0 && (
+                            <div className={styles.vStepLine}>
+                              <div className={styles.vStepLineFill}
+                                style={{background: done||active ? rc?.color : "var(--border)",
+                                  height: done ? "100%" : active ? "50%" : "0%"}}/>
+                            </div>
+                          )}
+                          <div className={styles.vStepRow}>
+                            <div className={styles.vStepNum}
+                              style={active||done ? {background:rc?.color,borderColor:rc?.color,color:"#fff",boxShadow:`0 4px 14px ${rc?.color}44`} : {}}>
+                              {done ? <span style={{display:"flex"}}>{I.check}</span> : s.n}
+                            </div>
+                            <div className={styles.vStepText}>
+                              <div className={styles.vStepLabel} style={active?{color:"var(--text-primary)"}:{}}>{s.label}</div>
+                              <div className={styles.vStepDesc}>{s.desc}</div>
+                            </div>
                           </div>
-                          <AnimatePresence>
-                            {createRole===r.key && (
-                              <motion.div className={styles.roleCheck}
-                                style={{background:r.color}}
-                                initial={{scale:0,rotate:-90}} animate={{scale:1,rotate:0}} exit={{scale:0}}>
-                                {I.check}
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </motion.button>
-                      ))}
-                    </div>
-                    <motion.button className={styles.nextBtn}
-                      onClick={()=>setCreateStep(2)}
-                      style={{background:`linear-gradient(135deg,${ROLES.find(r=>r.key===createRole)?.dark},${ROLES.find(r=>r.key===createRole)?.color})`}}
-                      whileHover={{scale:1.02,boxShadow:`0 8px 28px ${ROLES.find(r=>r.key===createRole)?.color}44`}}
-                      whileTap={{scale:0.97}}>
-                      Continue as {createRole} →
-                    </motion.button>
-                  </motion.div>
-                )}
-
-                {/* Step 2: Details */}
-                {createStep===2 && (
-                  <motion.div key="s2" className={styles.createPanel}
-                    initial={{opacity:0,x:32}} animate={{opacity:1,x:0}} exit={{opacity:0,x:-24}}
-                    transition={{duration:0.3}}>
-
-                    <div className={styles.createHeader}>
-                      <span className={styles.createRoleBadge}
-                        style={{color:ROLES.find(r=>r.key===createRole)?.color,
-                          background:`${ROLES.find(r=>r.key===createRole)?.color}18`,
-                          borderColor:`${ROLES.find(r=>r.key===createRole)?.color}30`}}>
-                        {ROLES.find(r=>r.key===createRole)?.icon} {createRole}
-                      </span>
-                      <h2 className={styles.createTitle}>Account Details</h2>
-                    </div>
-
-                    {/* Live preview */}
-                    <AnimatePresence>
-                      {previewEmail && (
-                        <motion.div className={styles.livePreview}
-                          initial={{opacity:0,height:0,marginBottom:0}}
-                          animate={{opacity:1,height:"auto",marginBottom:16}}
-                          exit={{opacity:0,height:0,marginBottom:0}}
-                          style={{borderColor:`${ROLES.find(r=>r.key===createRole)?.color}30`}}>
-                          <span className={styles.lpLabel}>Preview</span>
-                          <span className={styles.lpEmail}
-                            style={{color:ROLES.find(r=>r.key===createRole)?.color}}>
-                            {previewEmail}
-                          </span>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    <div className={styles.formGrid}>
-                      <CField label="Code" placeholder="e.g. 2203119" value={form.code}
-                        onChange={v=>setForm(p=>({...p,code:v}))} required/>
-                      <CField label="First Name" placeholder="Ahmed" value={form.firstName}
-                        onChange={v=>setForm(p=>({...p,firstName:v}))} required/>
-                      <CField label="Last Name" placeholder="Mohamed" value={form.lastName}
-                        onChange={v=>setForm(p=>({...p,lastName:v}))} required/>
-                      <div className={styles.formFieldFull}>
-                        <div className={styles.formLabelRow}>
-                          <label className={styles.formLabel}>Password <span className={styles.req}>*</span></label>
-                          <button className={styles.genSmall} onClick={()=>setForm(p=>({...p,password:genPwd()}))}>
-                            {I.spark} Generate
-                          </button>
                         </div>
-                        <div className={styles.pwdField}>
-                          <input type={showPwd?"text":"password"} className={styles.pwdInput}
-                            placeholder="Min 8 characters" value={form.password}
-                            onChange={e=>setForm(p=>({...p,password:e.target.value}))}/>
-                          <button className={styles.pwdEye} onClick={()=>setShowPwd(p=>!p)}>
-                            {showPwd?I.eyeoff:I.eye}
-                          </button>
-                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Selected role preview (step 2) */}
+                  {createStep===2 && (
+                    <div className={styles.createSideRole}>
+                      <div className={styles.createSideRoleIcon}
+                        style={{background:`${ROLES.find(r=>r.key===createRole)?.color}18`,
+                          border:`2px solid ${ROLES.find(r=>r.key===createRole)?.color}30`}}>
+                        {ROLES.find(r=>r.key===createRole)?.icon}
+                      </div>
+                      <div className={styles.createSideRoleName}
+                        style={{color:ROLES.find(r=>r.key===createRole)?.color}}>
+                        {ROLES.find(r=>r.key===createRole)?.label}
+                      </div>
+                      <div className={styles.createSideRolePrefix}>
+                        <code>{ROLES.find(r=>r.key===createRole)?.prefix}-</code>code·Name
                       </div>
                     </div>
+                  )}
+                </div>
 
-                    <div className={styles.createActions}>
-                      <button className={styles.btnGhost} onClick={()=>setMode("home")}>Cancel</button>
-                      <motion.button className={styles.btnCreate}
-                        onClick={create}
-                        disabled={!form.code||!form.firstName||!form.lastName||!form.password}
-                        style={{
-                          opacity:(form.code&&form.firstName&&form.lastName&&form.password)?1:0.4,
-                          background:`linear-gradient(135deg,${ROLES.find(r=>r.key===createRole)?.dark},${ROLES.find(r=>r.key===createRole)?.color})`
-                        }}
-                        whileHover={{scale:1.02}} whileTap={{scale:0.97}}>
-                        {I.plus} Create Account
-                      </motion.button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                {/* ── Right panel: step content ── */}
+                <div className={styles.createContent}>
+                  <AnimatePresence mode="wait">
+
+                    {/* Step 1: Choose role */}
+                    {createStep===1 && (
+                      <motion.div key="s1"
+                        initial={{opacity:0,x:20}} animate={{opacity:1,x:0}} exit={{opacity:0,x:-16}}
+                        transition={{duration:0.22}}>
+
+                        <h2 className={styles.createTitle}>Choose Account Type</h2>
+                        <p className={styles.createSub}>Select the role for the new account</p>
+
+                        <div className={styles.roleGrid}>
+                          {ROLES.map(r => (
+                            <button key={r.key}
+                              className={`${styles.roleCard} ${createRole===r.key ? styles.roleCardOn : ""}`}
+                              style={{"--rc":r.color,"--rcd":r.dark}}
+                              onClick={()=>setCreateRole(r.key)}>
+
+                              {/* Selected bar */}
+                              <div className={styles.roleCardBar}
+                                style={{background: createRole===r.key ? r.color : "transparent"}}/>
+
+                              <div className={styles.roleCardIconWrap}
+                                style={{background:`${r.color}14`, border:`2px solid ${r.color}25`}}>
+                                <span className={styles.roleCardIcon}>{r.icon}</span>
+                              </div>
+                              <div className={styles.roleCardName}>{r.label}</div>
+                              <div className={styles.roleCardPrefix} style={{color:r.color}}>
+                                <code>{r.prefix}-</code>code·Name
+                              </div>
+
+                              {createRole===r.key && (
+                                <div className={styles.roleCheck} style={{background:r.color}}>
+                                  {I.check}
+                                </div>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+
+                        <motion.button className={styles.nextBtn}
+                          onClick={()=>setCreateStep(2)}
+                          style={{background:`linear-gradient(135deg,${ROLES.find(r=>r.key===createRole)?.dark},${ROLES.find(r=>r.key===createRole)?.color})`}}
+                          whileHover={{scale:1.02, filter:"brightness(1.08)"}}
+                          whileTap={{scale:0.97}}>
+                          Continue →
+                        </motion.button>
+                      </motion.div>
+                    )}
+
+                    {/* Step 2: Details */}
+                    {createStep===2 && (
+                      <motion.div key="s2"
+                        initial={{opacity:0,x:20}} animate={{opacity:1,x:0}} exit={{opacity:0,x:-16}}
+                        transition={{duration:0.22}}>
+
+                        <h2 className={styles.createTitle}>Account Details</h2>
+                        <p className={styles.createSub}>Fill in the information for the new account</p>
+
+                        {/* Live email preview */}
+                        <AnimatePresence>
+                          {previewEmail && (
+                            <motion.div className={styles.livePreview}
+                              initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}}
+                              exit={{opacity:0,height:0}}
+                              style={{borderColor:`${ROLES.find(r=>r.key===createRole)?.color}35`,
+                                background:`${ROLES.find(r=>r.key===createRole)?.color}08`}}>
+                              <div className={styles.lpLeft}>
+                                <span className={styles.lpLabel}>Email Preview</span>
+                                <span className={styles.lpEmail}
+                                  style={{color:ROLES.find(r=>r.key===createRole)?.color}}>
+                                  {previewEmail}
+                                </span>
+                              </div>
+                              <span className={styles.lpCheckIco} style={{color:ROLES.find(r=>r.key===createRole)?.color}}>
+                                {I.check}
+                              </span>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
+                        <div className={styles.formGrid}>
+                          <CField label="Code" placeholder="e.g. 2203119" value={form.code}
+                            onChange={v=>setForm(p=>({...p,code:v}))} required
+                            accentColor={ROLES.find(r=>r.key===createRole)?.color}/>
+                          <div/>
+                          <CField label="First Name" placeholder="Ahmed" value={form.firstName}
+                            onChange={v=>setForm(p=>({...p,firstName:v}))} required
+                            accentColor={ROLES.find(r=>r.key===createRole)?.color}/>
+                          <CField label="Last Name" placeholder="Mohamed" value={form.lastName}
+                            onChange={v=>setForm(p=>({...p,lastName:v}))} required
+                            accentColor={ROLES.find(r=>r.key===createRole)?.color}/>
+                          <div className={styles.formFieldFull}>
+                            <div className={styles.formLabelRow}>
+                              <label className={styles.formLabel}>Password <span className={styles.req}>*</span></label>
+                              <button className={styles.genSmall} onClick={()=>setForm(p=>({...p,password:genPwd()}))}>
+                                {I.spark} Auto-generate
+                              </button>
+                            </div>
+                            <div className={styles.pwdField}
+                              style={form.password?{borderColor:`${ROLES.find(r=>r.key===createRole)?.color}55`}:{}}>
+                              <input type={showPwd?"text":"password"} className={styles.pwdInput}
+                                placeholder="Min 8 characters" value={form.password}
+                                onChange={e=>setForm(p=>({...p,password:e.target.value}))}/>
+                              <button className={styles.pwdEye} onClick={()=>setShowPwd(p=>!p)}>
+                                {showPwd?I.eyeoff:I.eye}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className={styles.createActions}>
+                          <button className={styles.btnGhost} onClick={()=>setMode("home")}>Cancel</button>
+                          <motion.button className={styles.btnCreate}
+                            onClick={create}
+                            disabled={!form.code||!form.firstName||!form.lastName||!form.password}
+                            style={{
+                              opacity:(form.code&&form.firstName&&form.lastName&&form.password)?1:0.38,
+                              background:`linear-gradient(135deg,${ROLES.find(r=>r.key===createRole)?.dark},${ROLES.find(r=>r.key===createRole)?.color})`
+                            }}
+                            whileHover={{scale:1.02}} whileTap={{scale:0.97}}>
+                            {I.plus} Create Account
+                          </motion.button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
             </motion.div>
           )}
 
@@ -785,12 +868,13 @@ function ActionTile({ icon, label, color, onClick, danger }) {
   );
 }
 
-function CField({ label, placeholder, value, onChange, required }) {
+function CField({ label, placeholder, value, onChange, required, accentColor }) {
   return (
     <div className={styles.formField}>
       <label className={styles.formLabel}>{label}{required&&<span className={styles.req}> *</span>}</label>
       <input className={styles.formInput} placeholder={placeholder} value={value}
-        onChange={e=>onChange(e.target.value)}/>
+        onChange={e=>onChange(e.target.value)}
+        style={value && accentColor ? {borderColor:`${accentColor}55`} : {}}/>
     </div>
   );
 }
