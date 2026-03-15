@@ -79,13 +79,6 @@ const MILESTONES = [
   { year:"Present", text:"Continuous growth and strong industry partnerships",    color:"#10b981" },
 ];
 
-const TOP_STUDENTS = [
-  { name:"Ganna Muhamed", dept:"Computer Science",  gpa:"4.0",  award:"Winner of National AI Competition 2024"      },
-  { name:"Jojo Muhamed",  dept:"Engineering",        gpa:"3.98", award:"Best Robotics Project Awards"                },
-  { name:"Ganna Muhamed", dept:"Business",           gpa:"3.86", award:"Outstanding Leadership in Student Council"   },
-  { name:"Ganna Muhamed", dept:"Arabic Commercial",  gpa:"3.92", award:"First Place in National Business Case"       },
-];
-
 const CONTACT = [
   { icon:"📍", label:"Address", value:"Industrial Zone – 4th Industrial Area – 6th of October City – Giza – Egypt" },
   { icon:"📞", label:"Phone",   value:"+20 2 38336005 / +20 2 38347120" },
@@ -409,37 +402,6 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      {/* ══ TOP STUDENTS ═════════════════════════ */}
-      <div>
-        <div className={styles.sectionHead}>
-          <span className={styles.sectionEyebrow}>🌟 Achievers</span>
-          <h2 className={styles.sectionTitle}>Top Students</h2>
-          <p className={styles.sectionSub}>Outstanding achievers this semester</p>
-        </div>
-        <motion.div className={styles.studentsGrid}
-          initial="hidden" whileInView="visible" viewport={{ once:true }}
-          variants={{ hidden:{}, visible:{ transition:{ staggerChildren:0.1 } } }}
-        >
-          {TOP_STUDENTS.map((s,i) => (
-            <motion.div key={i} className={styles.studentCard}
-              variants={{ hidden:{opacity:0,scale:0.88}, visible:{opacity:1,scale:1,transition:{duration:0.5,type:"spring",stiffness:200}} }}
-              whileHover={{ y:-10, scale:1.03 }}
-            >
-              <motion.div className={styles.studentAv}
-                animate={{ boxShadow:["0 0 0 0px rgba(124,58,237,0.35)","0 0 0 10px rgba(124,58,237,0)"] }}
-                transition={{ duration:2, repeat:Infinity, delay:i*0.5 }}
-              >
-                {s.name.charAt(0)}
-              </motion.div>
-              <strong className={styles.studentName}>{s.name}</strong>
-              <span className={styles.studentDept}>{s.dept}</span>
-              <div className={styles.studentGpa}>⭐ GPA: {s.gpa}</div>
-              <p className={styles.studentAward}>{s.award}</p>
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
-
       {/* ══ LEADERSHIP ═══════════════════════════ */}
       <motion.div className={styles.leaderSection}
         initial={{ opacity:0, y:30 }} whileInView={{ opacity:1, y:0 }}
@@ -505,15 +467,36 @@ export default function StudentDashboard() {
           viewport={{ once:true }} transition={{ duration:0.55 }}
         >
           <h3 className={styles.contactTitle}>📍 Our Location</h3>
-          <div className={styles.mapPlaceholder}>
-            <motion.div
-              animate={{ scale:[1,1.1,1] }}
-              transition={{ duration:3, repeat:Infinity }}
-              className={styles.mapPin}
-            >📍</motion.div>
-            <p>6th of October City</p>
-            <span>Giza, Egypt</span>
-            <div className={styles.mapGrid} />
+          <div className={styles.mapWrap}>
+            {/* Google Maps embed — 6th of October City, Giza */}
+            <motion.div className={styles.mapFrame}
+              initial={{ opacity:0, scale:0.97 }}
+              whileInView={{ opacity:1, scale:1 }}
+              viewport={{ once:true }}
+              transition={{ duration:0.6, ease:[0.22,1,0.36,1] }}>
+              <iframe
+                title="Akhbar Elyom Academy Location"
+                className={styles.mapIframe}
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3456.9!2d30.9800!3d29.9600!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjnCsDU3JzM2LjAiTiAzMMKwNTgnNDguMCJF!5e0!3m2!1sen!2seg!4v1234567890!5m2!1sen!2seg"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                allowFullScreen
+              />
+              {/* Overlay with animation on first reveal */}
+              <motion.div className={styles.mapRevealOverlay}
+                initial={{ scaleY:1 }}
+                whileInView={{ scaleY:0 }}
+                viewport={{ once:true }}
+                transition={{ duration:0.7, delay:0.3, ease:[0.22,1,0.36,1] }}
+                style={{ originY:0 }}/>
+            </motion.div>
+            <motion.a
+              href="https://maps.app.goo.gl/FtdqeLGivJSQnqBD9"
+              target="_blank" rel="noopener noreferrer"
+              className={styles.mapOpenBtn}
+              whileHover={{ scale:1.04, y:-2 }} whileTap={{ scale:0.97 }}>
+              <span>🗺️</span> Open in Google Maps
+            </motion.a>
           </div>
         </motion.div>
       </div>

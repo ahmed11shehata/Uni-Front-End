@@ -89,7 +89,7 @@
   border-bottom: 1px solid var(--card-border, #f0f2f8);
   background: var(--card-bg-2, #fafbff); flex-shrink: 0;
 }
-.dayHdr  { text-align:center; font-size:10px; font-weight:700; color: var(--text-muted, #a8b4cc); text-transform:uppercase; letter-spacing:.07em; padding:6px 0 5px; }
+.dayHdr  { text-align:center; font-size:10px; font-weight:700; color: var(--text-secondary, #64748b); text-transform:uppercase; letter-spacing:.07em; padding:6px 0 5px; }
 .wknd    { color: var(--text-secondary, #c4b5fd); opacity: 0.75; }
 
 /* ── Grid ── */
@@ -102,8 +102,8 @@
 
 /* ── Cell ── */
 .cell {
-  border-right: 1px solid var(--card-border, #f0f2f8);
-  border-bottom: 1px solid var(--card-border, #f0f2f8);
+  border-right: 1px solid var(--border, #e2e8f0);
+  border-bottom: 1px solid var(--border, #e2e8f0);
   padding: 6px 5px 5px;
   display: flex; flex-direction: column; gap: 3px;
   overflow: hidden;
@@ -118,7 +118,7 @@
 
 /* Day number */
 .cellTop    { flex-shrink: 0; line-height: 1; margin-bottom: 1px; }
-.numTxt     { font-size: 11.5px; font-weight: 600; color: var(--text-secondary, #475569); }
+.numTxt     { font-size: 11.5px; font-weight: 700; color: var(--text-primary, #334155); }
 .numGhost   { color: var(--text-muted, #d0d7e6); opacity: 0.5; }
 .todayNum {
   display: inline-flex; align-items: center; justify-content: center;
@@ -138,30 +138,34 @@
 .evChip {
   display: flex; align-items: center; gap: 0;
   width: 100%; padding: 0;
-  border: none; border-radius: 6px;
-  background: var(--bg);
+  border: 2px solid var(--c, #818cf8);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--c, #818cf8) 14%, white);
   cursor: pointer;
   font-family: "Sora",sans-serif;
   overflow: hidden; flex-shrink: 0;
   transition: transform .12s, box-shadow .15s;
 }
 .evChip:hover {
-  box-shadow: 2px 2px 10px var(--c, #00000022);
+  box-shadow: 2px 2px 12px var(--c, #00000033);
   transform: translateX(2px);
+  background: color-mix(in srgb, var(--c, #818cf8) 22%, white);
 }
 .evChip:hover .evName { font-weight: 700; }
 
-.evExpired { opacity: .5; }
-.evExpired .evStripe { background: var(--text-muted, #94a3b8) !important; }
+.evExpired { opacity: .55; }
+.evExpired .evStripe { background: #94a3b8 !important; }
+.evExpired.evChip { border-color: #94a3b8 !important; background: rgba(148,163,184,0.12) !important; }
 
 .evStripe {
-  width: 3.5px; min-width: 3.5px; align-self: stretch;
+  width: 4px; min-width: 4px; align-self: stretch;
   border-radius: 3px 0 0 3px; flex-shrink: 0;
+  background: var(--c, #818cf8) !important;
 }
 .evName {
   flex: 1;
-  font-size: 9.5px; font-weight: 600;
-  color: var(--text-primary, #1e1b3a);
+  font-size: 10px; font-weight: 800;
+  color: color-mix(in srgb, var(--c, #818cf8) 75%, #1e1b3a);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   text-align: left;
   padding: 3.5px 4px 3.5px 5px;
@@ -204,12 +208,13 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 7px 14px 7px 10px;
+  padding: 8px 16px 8px 12px;
   border-radius: 30px;
-  background: var(--sidebar-bg, #1a1235);
-  border: 1px solid var(--card-border, transparent);
+  /* Always dark — never inherits from theme */
+  background: #12103a !important;
+  border: 1.5px solid rgba(255,255,255,0.16) !important;
   white-space: nowrap;
-  box-shadow: 0 10px 32px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.2);
+  box-shadow: 0 12px 36px rgba(0,0,0,.55), 0 3px 10px rgba(0,0,0,.3);
 }
 .floatTip::after {
   content: "";
@@ -217,30 +222,31 @@
   top: 100%; left: 50%;
   transform: translateX(-50%);
   border: 6px solid transparent;
-  border-top-color: var(--sidebar-bg, #1a1235);
+  border-top-color: #12103a;
 }
 
-.ftDot   { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-.ftType  { font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; padding:2px 8px; border-radius:20px; }
-.ftTitle { font-size:12px; font-weight:700; color: var(--text-primary, #fff); max-width:260px; overflow:hidden; text-overflow:ellipsis; }
-.ftCode  { font-size:10px; font-weight:600; color: var(--text-muted, #8a7fc0); }
-.ftExp   { font-size:9.5px; font-weight:800; color:#ef4444; background:rgba(239,68,68,.15); padding:2px 8px; border-radius:12px; }
+.ftDot   { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.ftType  {
+  font-size:9.5px; font-weight:800; text-transform:uppercase;
+  letter-spacing:.06em; padding:3px 9px; border-radius:20px;
+  /* text color always white regardless of theme */
+  color: #fff !important;
+}
+.ftTitle {
+  font-size:12.5px; font-weight:700;
+  color: #ffffff !important;
+  max-width:260px; overflow:hidden; text-overflow:ellipsis;
+}
+.ftCode  { font-size:10px; font-weight:600; color: rgba(165,180,252,0.9) !important; }
+.ftExp   {
+  font-size:9.5px; font-weight:800;
+  color: #ff8080 !important;
+  background: rgba(239,68,68,.22) !important;
+  padding:2px 8px; border-radius:12px;
+}
 
 /* Dark themes: make tooltip text clearly visible */
-[data-theme="dark"] .ftTitle,
-[data-theme="space"] .ftTitle,
-[data-theme="ramadan"] .ftTitle,
-[data-theme="ocean"] .ftTitle,
-[data-theme="forest"] .ftTitle { color: #e8edf8; }
-
-[data-theme="ramadan"] .ftTitle { color: #f0e4c0; }
-[data-theme="ramadan"] .ftCode  { color: #d4af37; }
-[data-theme="ocean"] .ftTitle   { color: #d0e8f8; }
-[data-theme="ocean"] .ftCode    { color: #5cb8d8; }
-[data-theme="forest"] .ftTitle  { color: #ccead4; }
-[data-theme="forest"] .ftCode   { color: #58b870; }
-[data-theme="space"] .ftTitle   { color: #c8d4f8; }
-[data-theme="space"] .ftCode    { color: #6878e0; }
+/* floatTip always dark bg — no theme overrides needed */
 
 /* ═══════════════════════════════════════════════════════════════
    POPUP

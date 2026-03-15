@@ -36,7 +36,7 @@
 .viewBtn:hover { color:var(--text-primary); }
 .viewBtnOn { color:var(--vc,#818cf8) !important; font-weight:800; background:color-mix(in srgb,var(--vc,#818cf8) 8%,var(--card-bg)); }
 .viewBtnEmoji { font-size:1.1rem; }
-.viewBtnLabel { }
+.viewBtnLabel { display: inline; }
 .viewBtnUnderline {
   position:absolute; bottom:6px; left:20%; right:20%; height:2.5px; border-radius:99px;
 }
@@ -144,20 +144,37 @@
 /* ── Session block ── */
 .session {
   position:absolute; left:3px; right:3px;
-  border-radius:9px; padding:6px 8px;
+  border-radius:10px; padding:7px 9px;
   cursor:default; overflow:visible;
-  transition:box-shadow 0.15s;
+  transition:box-shadow 0.15s, transform 0.15s;
 }
-.session:hover { box-shadow:0 4px 16px rgba(0,0,0,0.15); }
-.sessionLec { border-left-width: 3.5px !important; }
-.sessionSec { border-left-width: 3.5px !important; border-left-style: dashed !important; }
+.session:hover { box-shadow:0 6px 20px rgba(0,0,0,0.2); transform:translateX(2px); }
+.sessionLec { border-left-width: 4px !important; }
+.sessionSec { border-left-width: 4px !important; border-left-style: dashed !important; }
 .sessionCodeTag {
-  display:inline-block; font-size:0.66rem; font-weight:800; letter-spacing:0.04em;
-  color:white; padding:2px 7px; border-radius:5px; margin-bottom:3px;
+  display:inline-block; font-size:0.68rem; font-weight:900; letter-spacing:0.04em;
+  color:white; padding:2px 8px; border-radius:5px; margin-bottom:4px;
 }
-.sessionName { font-size:0.7rem; font-weight:700; color:var(--text-secondary); line-height:1.3; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical; }
-.sessionMeta { font-size:0.62rem; color:var(--text-muted); margin-top:2px; }
-.sessionTime { font-size:0.6rem; color:var(--text-muted); margin-top:1px; }
+/* Subject name — big, white on solid background */
+.sessionName {
+  font-size:0.84rem; font-weight:900; line-height:1.3;
+  overflow:hidden; display:-webkit-box; -webkit-line-clamp:2;
+  line-clamp:2; -webkit-box-orient:vertical;
+  color: rgba(255,255,255,0.97);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  margin-bottom: 2px;
+}
+/* Instructor name */
+.sessionMeta {
+  font-size:0.69rem; font-weight:700; margin-top:3px;
+  color: rgba(255,255,255,0.82);
+}
+/* Room + time */
+.sessionTime {
+  font-size:0.66rem; font-weight:700; margin-top:2px;
+  color: rgba(255,255,255,0.75);
+  display:flex; align-items:center; gap:3px;
+}
 
 /* Tooltip */
 .tooltip {
@@ -168,9 +185,13 @@
   box-shadow:0 12px 36px rgba(0,0,0,0.18);
   pointer-events:none;
 }
-.ttCode    { font-size:0.72rem; font-weight:800; letter-spacing:0.04em; margin-bottom:3px; }
-.ttName    { font-size:0.88rem; font-weight:700; margin-bottom:8px; color:var(--text-primary); }
-.ttRow     { display:flex; align-items:flex-start; gap:7px; font-size:0.76rem; color:var(--text-secondary); margin-bottom:4px; }
+/* Last 2 columns: flip tooltip to left */
+.dayCol:nth-last-child(-n+2) .tooltip {
+  left:auto; right:calc(100% + 8px);
+}
+.ttCode    { font-size:0.74rem; font-weight:900; letter-spacing:0.04em; margin-bottom:4px; }
+.ttName    { font-size:0.92rem; font-weight:800; margin-bottom:10px; color:var(--text-primary); }
+.ttRow     { display:flex; align-items:flex-start; gap:7px; font-size:0.78rem; color:var(--text-primary); margin-bottom:5px; font-weight:600; }
 .ttType    { font-size:0.72rem; font-weight:700; padding:3px 10px; border-radius:99px; margin-top:7px; display:inline-block; }
 
 /* ── Exam view ── */
@@ -197,7 +218,7 @@
 
 .examCard {
   display:flex; align-items:center;
-  background:var(--card-bg); border:1.5px solid var(--card-border,var(--border));
+  background:var(--card-bg); border:2px solid var(--border);
   border-radius:18px; overflow:hidden;
   transition:transform 0.2s, box-shadow 0.2s;
 }
@@ -218,7 +239,7 @@
   padding:3px 10px; border-radius:7px; border:1px solid;
   margin-bottom:5px;
 }
-.examName    { font-size:0.95rem; font-weight:700; color:var(--text-primary); margin-bottom:8px; }
+.examName    { font-size:1.05rem; font-weight:900; color:var(--text-primary); margin-bottom:10px; }
 .examMetaRow { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
 .examMetaItem{
   display:flex; align-items:center; gap:5px;

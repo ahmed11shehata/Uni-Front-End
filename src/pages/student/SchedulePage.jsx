@@ -284,29 +284,31 @@ function SessionBlock({ s, hovered, onEnter, onLeave }) {
       className={`${styles.session} ${isLec?styles.sessionLec:styles.sessionSec}`}
       style={{
         top, height,
-        background: isLec ? `${s.color}18` : `${s.color}0e`,
-        borderLeft: `3px solid ${s.color}`,
+        background: isLec
+          ? `linear-gradient(160deg, ${s.color}ee 0%, ${s.color}cc 100%)`
+          : `linear-gradient(160deg, ${s.color}cc 0%, ${s.color}aa 100%)`,
+        borderLeft: `4px solid ${s.color}`,
         '--sc': s.color,
       }}
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
-      animate={hovered ? {x:2,zIndex:10} : {x:0,zIndex:1}}
+      animate={hovered ? {x:3,zIndex:10} : {x:0,zIndex:1}}
       transition={{duration:0.15}}>
 
       <div className={styles.sessionCodeTag} style={{background:s.color}}>
         {s.code}
       </div>
-      {height >= 40 && (
+      {height >= 38 && (
         <div className={styles.sessionName}>{s.name}</div>
       )}
-      {height >= 58 && (
+      {height >= 56 && (
         <div className={styles.sessionMeta}>
-          <span>{s.room}</span>
+          👤 {s.instructor}
         </div>
       )}
       {height >= 72 && (
         <div className={styles.sessionTime}>
-          {fmtTime(s.start)} – {fmtTime(s.end)}
+          🏛 {s.room} · {fmtTime(s.start)}–{fmtTime(s.end)}
         </div>
       )}
 
@@ -396,23 +398,23 @@ function ExamView({ data, type, color }) {
           return (
             <motion.div key={ex.id} className={styles.examCard}
               variants={{hidden:{opacity:0,y:18},show:{opacity:1,y:0,transition:{duration:0.42,ease:[0.22,1,0.36,1]}}}}
-              whileHover={{y:-4,boxShadow:'0 16px 40px rgba(0,0,0,0.12)'}}>
+              whileHover={{y:-4,boxShadow:`0 16px 44px ${ex.color}30`}}>
 
-              {/* Stripe */}
+              {/* Solid colored left stripe */}
               <div className={styles.examStripe} style={{background:ex.color}}/>
 
-              {/* Calendar tile */}
+              {/* Calendar tile — solid color */}
               <div className={styles.examCalTile}
-                style={{background:`${ex.color}12`,borderColor:`${ex.color}22`}}>
-                <div className={styles.examCalMonth} style={{color:ex.color}}>{dt.month}</div>
-                <div className={styles.examCalDay}>{dt.num}</div>
-                <div className={styles.examCalWeekday}>{dt.weekday.slice(0,3)}</div>
+                style={{background:ex.color, borderColor:ex.color}}>
+                <div className={styles.examCalMonth} style={{color:'rgba(255,255,255,.8)'}}>{dt.month}</div>
+                <div className={styles.examCalDay} style={{color:'#fff'}}>{dt.num}</div>
+                <div className={styles.examCalWeekday} style={{color:'rgba(255,255,255,.75)'}}>{dt.weekday.slice(0,3)}</div>
               </div>
 
               {/* Info */}
               <div className={styles.examInfo}>
                 <div className={styles.examCode}
-                  style={{color:ex.color,background:`${ex.color}14`,borderColor:`${ex.color}22`}}>
+                  style={{color:'#fff', background:ex.color, borderColor:ex.color}}>
                   {ex.code}
                 </div>
                 <div className={styles.examName}>{ex.name}</div>

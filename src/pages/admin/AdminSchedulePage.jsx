@@ -42,6 +42,7 @@ export default function AdminSchedulePage() {
   const [exams,        setExams]        = useState([]);   // exam entries
   const [slotModal,    setSlotModal]    = useState(null); // {day,start} clicked slot
   const [examModal,    setExamModal]    = useState(false);
+  const [addModal,     setAddModal]     = useState(false);  // free-form add session modal
   const [toast,        setToast]        = useState(null);
 
   const showToast = (msg, type="success") => { setToToast({msg,type}); setTimeout(()=>setToast(null),2800); };
@@ -121,6 +122,18 @@ export default function AdminSchedulePage() {
         )}
       </AnimatePresence>
 
+      {/* Free-form Add Session modal */}
+      <AnimatePresence>
+        {addModal && (
+          <AddSessionModal
+            courses={availableCourses}
+            year={selectedYear}
+            onAdd={addSession}
+            onClose={()=>setAddModal(false)}
+          />
+        )}
+      </AnimatePresence>
+
       {/* ── Header ── */}
       <motion.div className={styles.header} initial={{opacity:0,y:-12}} animate={{opacity:1,y:0}}>
         <div className={styles.headerLeft}>
@@ -130,11 +143,20 @@ export default function AdminSchedulePage() {
             <p className={styles.headerSub}>Build weekly timetables and exam schedules for each year batch</p>
           </div>
         </div>
-        <motion.button className={styles.saveBtn}
-          whileHover={{scale:1.02}} whileTap={{scale:0.97}}
-          onClick={()=>{setToToast({msg:"Schedule saved ✓",type:"success"});setTimeout(()=>setToast(null),2800);}}>
-          {Ic.save} Save Schedule
-        </motion.button>
+        <div style={{display:"flex",gap:10}}>
+          {view==="weekly" && (
+            <motion.button className={styles.addSessionBtn}
+              whileHover={{scale:1.02}} whileTap={{scale:0.97}}
+              onClick={()=>setAddModal(true)}>
+              {Ic.plus} Add Session
+            </motion.button>
+          )}
+          <motion.button className={styles.saveBtn}
+            whileHover={{scale:1.02}} whileTap={{scale:0.97}}
+            onClick={()=>{setToToast({msg:"Schedule saved ✓",type:"success"});setTimeout(()=>setToast(null),2800);}}>
+            {Ic.save} Save Schedule
+          </motion.button>
+        </div>
       </motion.div>
 
       {/* ── Controls ── */}
@@ -270,6 +292,189 @@ export default function AdminSchedulePage() {
     </div>
   );
 }
+
+/* ═══════════════════════════════════════════════════════════
+   ADD SESSION MODAL — free-form: pick course, day, time, duration
+═══════════════════════════════════════════════════════════ */
+function AddSessionModal({ courses, year, onAdd, onClose }) {
+  const [courseCode, setCourseCode] = useState(courses[0]?.code || "");
+  const [day,        setDay]        = useState("Saturday");
+  const [startH,     setStartH]     = useState(8);
+  const [startM,     setStartM]     = useState(0);
+  const [duration,   setDuration]   = useState(1.5);
+  const [type,       setType]       = useState("Lecture");
+  const [room,       setRoom]       = useState("");
+  const [groupMode,  setGroupMode]  = useState("both");
+  const [roomB,      setRoomB]      = useState("");
+
+  const course  = courses.find(c => c.code === courseCode);
+  const startDec = Math.round((startH + startM / 60) * 4) / 4; // snap to 15-min
+  const valid    = courseCode && room.trim();
+
+  const handleAdd = () => {
+    if (!valid) return;
+    const base = {
+      day, start: startDec, end: startDec + duration,
+      code: courseCode, name: course?.name || courseCode,
+      type, color: course?.color || "#818cf8",
+      instructor: course?.instructor || "",
+    };
+    if (groupMode === "both") {
+      onAdd({ ...base, group: "A", room: room.trim() }, true);
+      onAdd({ ...base, group: "B", room: (roomB.trim() || room.trim()) }, false);
+    } else {
+      onAdd({ ...base, group: groupMode, room: room.trim() }, false);
+    }
+    onClose();
+  };
+
+  const DAYS_LIST = ["Saturday","Sunday","Monday","Tuesday","Wednesday","Thursday"];
+
+  return (
+    <motion.div className={styles.overlay}
+      initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+      onClick={onClose}>
+      <motion.div className={styles.addModal}
+        initial={{scale:0.88,y:30,opacity:0}} animate={{scale:1,y:0,opacity:1}}
+        exit={{scale:0.9,opacity:0}} transition={{type:"spring",stiffness:360,damping:26}}
+        onClick={e=>e.stopPropagation()}>
+
+        {/* Header */}
+        <div className={styles.addModalHead}>
+          <div className={styles.addModalHeadLeft}>
+            <div className={styles.addModalIcon}>{Ic.plus}</div>
+            <div>
+              <h3 className={styles.addModalTitle}>Add New Session</h3>
+              <p className={styles.addModalSub}>Year {year} — Choose day, time & course</p>
+            </div>
+          </div>
+          <button className={styles.modalCloseBtn} onClick={onClose}>{Ic.close}</button>
+        </div>
+
+        <div className={styles.addModalBody}>
+          {/* Row 1: Course */}
+          <div className={styles.sfGroup}>
+            <label className={styles.sfLabel}>Course</label>
+            <select className={styles.sfField} value={courseCode} onChange={e=>setCourseCode(e.target.value)}>
+              {courses.map(c=>(
+                <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {course && (
+            <div className={styles.coursePreview} style={{borderColor:`${course.color}40`,background:`${course.color}10`}}>
+              <div style={{width:12,height:12,borderRadius:"50%",background:course.color,flexShrink:0}}/>
+              <div>
+                <div style={{fontWeight:700,fontSize:"0.84rem",color:"var(--text-primary)"}}>{course.name}</div>
+                <div style={{fontSize:"0.72rem",color:"var(--text-muted)"}}>{course.instructor}</div>
+              </div>
+            </div>
+          )}
+
+          {/* Row 2: Day + Type */}
+          <div className={styles.sfRow}>
+            <div className={styles.sfGroup}>
+              <label className={styles.sfLabel}>Day</label>
+              <select className={styles.sfField} value={day} onChange={e=>setDay(e.target.value)}>
+                {DAYS_LIST.map(d=><option key={d} value={d}>{d}</option>)}
+              </select>
+            </div>
+            <div className={styles.sfGroup}>
+              <label className={styles.sfLabel}>Session Type</label>
+              <select className={styles.sfField} value={type} onChange={e=>setType(e.target.value)}>
+                <option>Lecture</option><option>Section</option><option>Lab</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Row 3: Start time + Duration */}
+          <div className={styles.sfRow}>
+            <div className={styles.sfGroup}>
+              <label className={styles.sfLabel}>Start Time</label>
+              <div className={styles.timePickerRow}>
+                <select className={styles.sfFieldSm} value={startH} onChange={e=>setStartH(Number(e.target.value))}>
+                  {[8,9,10,11,12,13,14,15,16].map(h=>{
+                    const disp = h > 12 ? h-12 : h === 0 ? 12 : h;
+                    const ap   = h >= 12 ? "PM" : "AM";
+                    return <option key={h} value={h}>{disp}:00 {ap}</option>;
+                  })}
+                </select>
+                <select className={styles.sfFieldSm} value={startM} onChange={e=>setStartM(Number(e.target.value))}>
+                  <option value={0}>:00</option>
+                  <option value={15}>:15</option>
+                  <option value={30}>:30</option>
+                  <option value={45}>:45</option>
+                </select>
+              </div>
+            </div>
+            <div className={styles.sfGroup}>
+              <label className={styles.sfLabel}>Duration</label>
+              <select className={styles.sfField} value={duration} onChange={e=>setDuration(Number(e.target.value))}>
+                {[0.5,1,1.5,2,2.5,3].map(d=>(
+                  <option key={d} value={d}>{d===0.5?"30 min":`${d} hr${d!==1?"s":""}`}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Time preview */}
+          <div className={styles.timePreview}>
+            <span>📅</span>
+            <span><strong>{day}</strong></span>
+            <span>⏱ {fmtH(startDec)} → {fmtH(startDec + duration)}</span>
+            <span className={styles.timePreviewDur}>
+              {duration===0.5?"30 min":`${duration} hr${duration!==1?"s":""}`}
+            </span>
+          </div>
+
+          {/* Group */}
+          <div className={styles.sfGroup}>
+            <label className={styles.sfLabel}>Apply to Group</label>
+            <div className={styles.groupSel}>
+              {[["both","Both A & B"],["A","Group A only"],["B","Group B only"]].map(([g,l])=>(
+                <button key={g}
+                  className={`${styles.groupSelBtn} ${groupMode===g?styles.groupSelOn:""}`}
+                  onClick={()=>setGroupMode(g)}>{l}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Rooms */}
+          <div className={styles.sfRow}>
+            <div className={styles.sfGroup}>
+              <label className={styles.sfLabel}>
+                Room / Hall{groupMode==="both"?" (Group A)":""} <span className={styles.req}>*</span>
+              </label>
+              <input className={styles.sfField}
+                placeholder={groupMode==="both"?"Group A room":"e.g. Hall A, Lab 2"}
+                value={room} onChange={e=>setRoom(e.target.value)}/>
+            </div>
+            {groupMode==="both" && (
+              <div className={styles.sfGroup}>
+                <label className={styles.sfLabel}>Room (Group B)</label>
+                <input className={styles.sfField} placeholder="Group B room (optional)"
+                  value={roomB} onChange={e=>setRoomB(e.target.value)}/>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className={styles.slotModalActions}>
+          <button className={styles.btnGhost} onClick={onClose}>Cancel</button>
+          <motion.button className={styles.btnPrimary}
+            onClick={handleAdd} disabled={!valid}
+            style={{opacity:valid?1:0.45}}
+            whileHover={valid?{scale:1.02}:{}} whileTap={valid?{scale:0.97}:{}}>
+            {Ic.plus} Add to Schedule
+          </motion.button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 
 /* ═══════════════════════════════════════════════════════════
    DAY COLUMN

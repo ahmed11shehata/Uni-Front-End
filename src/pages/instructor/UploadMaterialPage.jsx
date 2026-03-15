@@ -84,7 +84,7 @@ function LectureForm({ courseId, color }) {
       {/* Title */}
       <div className={styles.field}>
         <label className={styles.label}>Lecture Title <span className={styles.req}>*</span></label>
-        <input className={styles.input} style={title?{borderColor:`${color}60`}:{}}
+        <input className={styles.inp} style={title?{borderColor:`${color}60`}:{}}
           placeholder="e.g. Deep Learning & CNNs"
           value={title} onChange={e=>setTitle(e.target.value)}/>
       </div>
@@ -93,7 +93,7 @@ function LectureForm({ courseId, color }) {
       <div className={styles.twoCol}>
         <div className={styles.field}>
           <label className={styles.label}>Week <span className={styles.req}>*</span></label>
-          <select className={styles.select} style={week?{borderColor:`${color}60`}:{}}
+          <select className={styles.sel} style={week?{borderColor:`${color}60`}:{}}
             value={week} onChange={e=>setWeek(e.target.value)}>
             <option value="">Select week…</option>
             {WEEKS.map(w=><option key={w} value={w}>{w}</option>)}
@@ -101,7 +101,7 @@ function LectureForm({ courseId, color }) {
         </div>
         <div className={styles.field}>
           <label className={styles.label}>Type</label>
-          <select className={styles.select}>
+          <select className={styles.sel}>
             <option>Video Lecture</option>
             <option>PDF Slides</option>
             <option>Lab Session</option>
@@ -132,13 +132,13 @@ function LectureForm({ courseId, color }) {
         <div className={styles.releaseOpts}>
           <button
             className={`${styles.releaseBtn} ${relNow?styles.releaseBtnOn:""}`}
-            style={relNow?{borderColor:color,background:`${color}10`,color}:{}}
+            style={relNow?{background:color,borderColor:color}:{}}
             onClick={()=>setRelNow(true)}>
             ⚡ Publish Immediately
           </button>
           <button
             className={`${styles.releaseBtn} ${!relNow?styles.releaseBtnOn:""}`}
-            style={!relNow?{borderColor:color,background:`${color}10`,color}:{}}
+            style={!relNow?{background:color,borderColor:color}:{}}
             onClick={()=>setRelNow(false)}>
             📅 Schedule for Later
           </button>
@@ -213,7 +213,7 @@ function AssignmentForm({ courseId, color }) {
       {/* Title */}
       <div className={styles.field}>
         <label className={styles.label}>Assignment Title <span className={styles.req}>*</span></label>
-        <input className={styles.input} style={title?{borderColor:`${color}60`}:{}}
+        <input className={styles.inp} style={title?{borderColor:`${color}60`}:{}}
           placeholder="e.g. Neural Network from Scratch"
           value={title} onChange={e=>setTitle(e.target.value)}/>
       </div>
@@ -230,7 +230,7 @@ function AssignmentForm({ courseId, color }) {
       <div className={styles.twoCol}>
         <div className={styles.field}>
           <label className={styles.label}>Deadline <span className={styles.req}>*</span></label>
-          <input type="date" className={styles.input} style={deadline?{borderColor:`${color}60`}:{}}
+          <input type="date" className={styles.inp} style={deadline?{borderColor:`${color}60`}:{}}
             value={deadline} onChange={e=>setDeadline(e.target.value)}
             min={new Date().toISOString().split("T")[0]}/>
         </div>
@@ -240,7 +240,7 @@ function AssignmentForm({ courseId, color }) {
             {[1,2,3,4,5].map(n=>(
               <button key={n}
                 className={`${styles.starBtn} ${Number(maxPts)===n?styles.starBtnOn:""}`}
-                style={Number(maxPts)===n?{borderColor:color,background:`${color}12`,color}:{}}
+                style={Number(maxPts)===n?{background:color,borderColor:color}:{}}
                 onClick={()=>setMaxPts(String(n))}>
                 {n}
               </button>
@@ -256,7 +256,7 @@ function AssignmentForm({ courseId, color }) {
           {FMTS.map(f=>(
             <button key={f}
               className={`${styles.fmtBtn} ${allowFmt.includes(f)?styles.fmtBtnOn:""}`}
-              style={allowFmt.includes(f)?{borderColor:color,background:`${color}10`,color}:{}}
+              style={allowFmt.includes(f)?{background:color,borderColor:color}:{}}
               onClick={()=>toggleFmt(f)}>
               .{f}
             </button>
@@ -279,13 +279,13 @@ function AssignmentForm({ courseId, color }) {
         <div className={styles.releaseOpts}>
           <button
             className={`${styles.releaseBtn} ${relNow?styles.releaseBtnOn:""}`}
-            style={relNow?{borderColor:color,background:`${color}10`,color}:{}}
+            style={relNow?{background:color,borderColor:color}:{}}
             onClick={()=>setRelNow(true)}>
             ⚡ Publish Now
           </button>
           <button
             className={`${styles.releaseBtn} ${!relNow?styles.releaseBtnOn:""}`}
-            style={!relNow?{borderColor:color,background:`${color}10`,color}:{}}
+            style={!relNow?{background:color,borderColor:color}:{}}
             onClick={()=>setRelNow(false)}>
             📅 Schedule Release
           </button>
@@ -334,8 +334,7 @@ export default function UploadMaterialPage() {
       <motion.div className={styles.hero}
         initial={{opacity:0,y:-18}} animate={{opacity:1,y:0}}
         transition={{duration:.45,ease:[.22,1,.36,1]}}>
-        <div className={styles.heroBg}
-          style={{background:`radial-gradient(ellipse 60% 100% at 10% 50%, ${c.color}18, transparent 70%)`}}/>
+        <div className={styles.heroBg}/>
         <div className={styles.heroContent}>
           <div>
             <h1 className={styles.heroTitle}>Upload Material</h1>
@@ -353,7 +352,7 @@ export default function UploadMaterialPage() {
                 whileHover={{y:-2}} whileTap={{scale:.96}}>
                 <span>{cr.icon}</span>
                 <div>
-                  <span className={styles.cpCode} style={{color:cr.color}}>{cr.code}</span>
+                  <span className={styles.cpCode}>{cr.code}</span>
                   <span className={styles.cpName}>{cr.name}</span>
                 </div>
               </motion.button>

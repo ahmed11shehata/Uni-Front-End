@@ -1,4 +1,4 @@
-// src/pages/admin/RegisterEmailPage.jsx
+// src/pages/admin/RegisterEmailPage.jsx — Full redesign: Split Panel Layout
 import { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import styles from "./RegisterEmailPage.module.css";
@@ -6,9 +6,9 @@ import styles from "./RegisterEmailPage.module.css";
 const DOMAIN = "@akhbaracademy.edu.eg";
 
 const ROLES = [
-  { key:"student",    label:"Student",    prefix:"cs",  icon:"🎓", color:"#818cf8", dark:"#4338ca" },
-  { key:"instructor", label:"Instructor", prefix:"dr",  icon:"🏛",  color:"#22c55e", dark:"#15803d" },
-  { key:"admin",      label:"Admin",      prefix:"adm", icon:"⚡",  color:"#f59e0b", dark:"#b45309" },
+  { key:"student",    label:"Student",    prefix:"cs",  icon:"🎓", color:"#818cf8", dark:"#4338ca", bg:"linear-gradient(135deg,#4338ca,#818cf8)" },
+  { key:"instructor", label:"Instructor", prefix:"dr",  icon:"🏛",  color:"#22c55e", dark:"#15803d", bg:"linear-gradient(135deg,#15803d,#22c55e)" },
+  { key:"admin",      label:"Admin",      prefix:"adm", icon:"⚡",  color:"#f59e0b", dark:"#b45309", bg:"linear-gradient(135deg,#b45309,#f59e0b)" },
 ];
 
 const MOCK_DB_INIT = [
@@ -33,10 +33,9 @@ function genPwd() {
   return Array.from({length:14},()=>chars[Math.floor(Math.random()*chars.length)]).join("");
 }
 
-/* ── SVG Icons ── */
+/* ── Icons ── */
 const I = {
   search: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>,
-  mail:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
   key:    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="7" cy="17" r="4"/><path d="M10.8 13.2L20 4"/><path d="M18 6l2 2"/><path d="M15 7l2 2"/></svg>,
   trash:  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>,
   pause:  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>,
@@ -50,831 +49,708 @@ const I = {
   spark:  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>,
   check:  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>,
   warn:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
-  chevR:  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>,
-  users:  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>,
+  mail:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
 };
 
-/* spring presets */
-const spring = { type:"spring", stiffness:420, damping:28 };
-const springSmooth = { type:"spring", stiffness:300, damping:26 };
+const sp = { type:"spring", stiffness:400, damping:28 };
 
+/* ═══════════════════════════════════════
+   ENVELOPE SCENE
+═══════════════════════════════════════ */
+function EnvelopeScene({ roleColor }) {
+  return (
+    <motion.div className={styles.envScene}>
+      <motion.div className={styles.envWrap}
+        initial={{ scale:0.2, opacity:0, y:80, rotate:-8 }}
+        animate={{
+          scale:   [0.2, 1.08, 1, 1, 0.4],
+          opacity: [0,   1,    1, 1, 0],
+          y:       [80,  0,    0, -10, -90],
+          x:       [0,   0,    0, 0,   420],
+          rotate:  [-8,  0,    0, 0,   16],
+        }}
+        transition={{ duration:1.8, times:[0,.22,.32,.55,1], ease:"easeInOut" }}>
+        <svg viewBox="0 0 200 136" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.envSvg}>
+          <defs>
+            <linearGradient id="eg" x1="0" y1="0" x2="200" y2="136" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#4338ca"/><stop offset="100%" stopColor="#6366f1"/>
+            </linearGradient>
+          </defs>
+          <ellipse cx="100" cy="130" rx="60" ry="6" fill="rgba(0,0,0,0.2)"/>
+          <rect x="8" y="24" width="184" height="100" rx="14" fill="url(#eg)"/>
+          <rect x="8" y="24" width="184" height="44" rx="14" fill="rgba(255,255,255,0.08)"/>
+          <path d="M8 36 L100 84 L192 36" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" fill="none" strokeLinejoin="round"/>
+          <path d="M8 124 L68 80" stroke="rgba(255,255,255,0.18)" strokeWidth="2"/>
+          <path d="M192 124 L132 80" stroke="rgba(255,255,255,0.18)" strokeWidth="2"/>
+          <motion.g initial={{y:20,opacity:0}} animate={{y:[20,0],opacity:[0,1]}} transition={{delay:.3,duration:.3}}>
+            <rect x="62" y="10" width="76" height="54" rx="6" fill="white" opacity="0.95"/>
+            <rect x="70" y="20" width="60" height="4" rx="2" fill={roleColor} opacity="0.7"/>
+            <rect x="70" y="30" width="44" height="3" rx="1.5" fill="rgba(0,0,0,0.15)"/>
+            <rect x="70" y="38" width="50" height="3" rx="1.5" fill="rgba(0,0,0,0.1)"/>
+          </motion.g>
+          <circle cx="100" cy="68" r="22" fill={roleColor}/>
+          <text x="100" y="75" textAnchor="middle" fill="white" fontSize="20" fontWeight="900" fontFamily="monospace">@</text>
+          <motion.circle cx="34" cy="30" r="4" fill="#fbbf24" animate={{scale:[0,1.2,1],opacity:[0,1,.8]}} transition={{delay:.35,duration:.4}}/>
+          <motion.circle cx="166" cy="34" r="3.5" fill="#34d399" animate={{scale:[0,1.2,1],opacity:[0,1,.8]}} transition={{delay:.45,duration:.4}}/>
+          <motion.circle cx="172" cy="100" r="3" fill="#f87171" animate={{scale:[0,1.2,1],opacity:[0,1,.7]}} transition={{delay:.55,duration:.4}}/>
+        </svg>
+        <motion.div className={styles.envCheck}
+          initial={{scale:0,opacity:0}} animate={{scale:1,opacity:1}}
+          transition={{delay:.45,type:"spring",stiffness:520,damping:22}}>✓</motion.div>
+      </motion.div>
+      <motion.p className={styles.envText} initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:.28}}>
+        Creating account…
+      </motion.p>
+    </motion.div>
+  );
+}
+
+/* ═══════════════════════════════════════
+   MAIN PAGE
+═══════════════════════════════════════ */
 export default function RegisterEmailPage() {
-  const [db,          setDb]          = useState(MOCK_DB_INIT);
-  const [searchCode,  setSearchCode]  = useState("");
-  const [result,      setResult]      = useState(null);
-  const [mode,        setMode]        = useState("home");
-  const [createStep,  setCreateStep]  = useState(1);
-  const [createRole,  setCreateRole]  = useState("student");
-  const [form,        setForm]        = useState({ code:"", firstName:"", lastName:"", password:"" });
-  const [newPwd,      setNewPwd]      = useState("");
-  const [showPwd,     setShowPwd]     = useState(false);
-  const [copied,      setCopied]      = useState(null); // id of copied item
-  const [toast,       setToast]       = useState(null);
-  const [filterPanel, setFilterPanel] = useState(null); // null | "students"|"instructors"|"admins"|"suspended"
+  const [db,         setDb]         = useState(MOCK_DB_INIT);
+  const [search,     setSearch]     = useState("");
+  const [result,     setResult]     = useState(null);
+  const [mode,       setMode]       = useState("home"); // home|found|notfound|changepwd|confirmdelete|create
+  const [activeTab,  setActiveTab]  = useState("overview"); // overview|password|danger
+  const [activeRole, setActiveRole] = useState(null); // sidebar filter
+  const [createStep, setCreateStep] = useState(1);
+  const [createRole, setCreateRole] = useState("student");
+  const [form,       setForm]       = useState({code:"",firstName:"",lastName:"",password:""});
+  const [newPwd,     setNewPwd]     = useState("");
+  const [showPwd,    setShowPwd]    = useState(false);
+  const [copied,     setCopied]     = useState(null);
+  const [toast,      setToast]      = useState(null);
+  const [emailAnim,  setEmailAnim]  = useState(false);
+  const [sideSearch, setSideSearch] = useState("");
   const inputRef = useRef(null);
 
-  useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(()=>{ if(mode==="home") inputRef.current?.focus(); },[mode]);
 
-  const showToast = (msg, type="ok") => {
-    setToast({msg,type}); setTimeout(()=>setToast(null),2800);
-  };
-  const copyText = (text, id) => {
-    navigator.clipboard?.writeText(text).catch(()=>{});
-    setCopied(id); setTimeout(()=>setCopied(null),1600);
-    showToast("Copied to clipboard ✓");
-  };
+  const showToast=(msg,type="ok")=>{ setToast({msg,type}); setTimeout(()=>setToast(null),2800); };
+  const copyText=(text,id)=>{ navigator.clipboard?.writeText(text).catch(()=>{}); setCopied(id); setTimeout(()=>setCopied(null),1600); showToast("Copied ✓"); };
 
-  const search = () => {
-    const q = searchCode.trim().toUpperCase();
-    if (!q) return;
-    const found = db.find(e => e.code.toUpperCase()===q);
-    setResult(found || null);
-    setMode(found ? "found" : "notfound");
-    setFilterPanel(null);
+  const doSearch=()=>{
+    const q=search.trim().toUpperCase(); if(!q) return;
+    const found=db.find(e=>e.code.toUpperCase()===q);
+    setResult(found||null); setMode(found?"found":"notfound"); setActiveTab("overview"); setActiveRole(null);
   };
 
-  const toggle = (entry) => {
-    const updated = {...entry, active: !entry.active};
-    setDb(p => p.map(e => e.id===entry.id ? updated : e));
-    if (result?.id === entry.id) setResult(updated);
-    showToast(updated.active ? "Account activated ✓" : "Account suspended");
+  const toggle=(entry)=>{
+    const u={...entry,active:!entry.active};
+    setDb(p=>p.map(e=>e.id===entry.id?u:e));
+    if(result?.id===entry.id) setResult(u);
+    showToast(u.active?"Account activated ✓":"Account suspended");
   };
 
-  const del = () => {
-    setDb(p => p.filter(e => e.id!==result.id));
-    setResult(null); setMode("home"); setSearchCode(""); setFilterPanel(null);
+  const del=()=>{
+    setDb(p=>p.filter(e=>e.id!==result.id));
+    setResult(null); setMode("home"); setSearch(""); setActiveRole(null);
     showToast("Account deleted");
   };
 
-  const savePwd = () => {
-    if (!newPwd.trim()) return;
-    const u = {...result, password:newPwd};
-    setDb(p => p.map(e => e.id===result.id ? u : e));
-    setResult(u); setMode("found"); setNewPwd(""); setShowPwd(false);
+  const savePwd=()=>{
+    if(!newPwd.trim()) return;
+    const u={...result,password:newPwd};
+    setDb(p=>p.map(e=>e.id===result.id?u:e));
+    setResult(u); setMode("found"); setActiveTab("overview"); setNewPwd(""); setShowPwd(false);
     showToast("Password updated ✓");
   };
 
-  const create = () => {
-    const {code,firstName,lastName,password} = form;
-    if (!code.trim()||!firstName.trim()||!lastName.trim()||!password.trim()) return;
-    const entry = {
-      id:Date.now(), code:code.trim(), firstName:firstName.trim(),
-      lastName:lastName.trim(), role:createRole, active:true,
-      createdAt:new Date().toISOString().split("T")[0], password:password.trim()
-    };
-    setDb(p => [entry,...p]);
-    setResult(entry); setMode("found"); setSearchCode(entry.code);
-    setForm({code:"",firstName:"",lastName:"",password:""}); setCreateStep(1);
-    setFilterPanel(null);
-    showToast("Account created successfully ✓");
+  const create=()=>{
+    const {code,firstName,lastName,password}=form;
+    if(!code.trim()||!firstName.trim()||!lastName.trim()||!password.trim()) return;
+    const entry={id:Date.now(),code:code.trim(),firstName:firstName.trim(),lastName:lastName.trim(),role:createRole,active:true,createdAt:new Date().toISOString().split("T")[0],password:password.trim()};
+    setDb(p=>[entry,...p]);
+    setEmailAnim(true);
+    setTimeout(()=>{ setEmailAnim(false); setResult(entry); setMode("found"); setSearch(entry.code); setActiveTab("overview"); setForm({code:"",firstName:"",lastName:"",password:""}); setCreateStep(1); setActiveRole(null); showToast("Account created successfully ✓"); }, 2000);
   };
 
+  /* Sidebar list */
+  const sideList = useMemo(()=>{
+    let list = [...db];
+    if(activeRole) list = list.filter(e=>activeRole==="suspended"?!e.active:e.role===activeRole);
+    if(sideSearch.trim()) {
+      const q = sideSearch.trim().toLowerCase();
+      list = list.filter(e=>
+        e.firstName.toLowerCase().includes(q) ||
+        e.lastName.toLowerCase().includes(q)  ||
+        e.code.toLowerCase().includes(q)
+      );
+    }
+    return list; // no limit
+  },[db,activeRole,sideSearch]);
+
   const stats = [
-    { key:"students",    n: db.filter(e=>e.role==="student").length,    l:"Students",    c:"#818cf8" },
-    { key:"instructors", n: db.filter(e=>e.role==="instructor").length, l:"Instructors", c:"#22c55e" },
-    { key:"admins",      n: db.filter(e=>e.role==="admin").length,      l:"Admins",      c:"#f59e0b" },
-    { key:"suspended",   n: db.filter(e=>!e.active).length,             l:"Suspended",   c:"#ef4444" },
+    { key:"student",    label:"Students",    n:db.filter(e=>e.role==="student").length,    c:"#818cf8", bg:"linear-gradient(135deg,#4338ca,#818cf8)" },
+    { key:"instructor", label:"Instructors", n:db.filter(e=>e.role==="instructor").length, c:"#22c55e", bg:"linear-gradient(135deg,#15803d,#22c55e)" },
+    { key:"admin",      label:"Admins",      n:db.filter(e=>e.role==="admin").length,      c:"#f59e0b", bg:"linear-gradient(135deg,#b45309,#f59e0b)" },
+    { key:"suspended",  label:"Suspended",   n:db.filter(e=>!e.active).length,             c:"#ef4444", bg:"linear-gradient(135deg,#991b1b,#ef4444)" },
   ];
 
-  const panelAccounts = useMemo(() => {
-    if (!filterPanel) return [];
-    if (filterPanel === "suspended")   return db.filter(e => !e.active);
-    if (filterPanel === "students")    return db.filter(e => e.role==="student");
-    if (filterPanel === "instructors") return db.filter(e => e.role==="instructor");
-    if (filterPanel === "admins")      return db.filter(e => e.role==="admin");
-    return [];
-  }, [filterPanel, db]);
-
-  const email       = result ? buildEmail(result.role, result.code, result.firstName, result.lastName) : "";
-  const roleData    = ROLES.find(r=>r.key===result?.role) || ROLES[0];
-  const previewEmail= buildEmail(createRole, form.code, form.firstName, form.lastName);
+  const email     = result ? buildEmail(result.role,result.code,result.firstName,result.lastName) : "";
+  const roleData  = ROLES.find(r=>r.key===result?.role)||ROLES[0];
+  const prevEmail = buildEmail(createRole,form.code,form.firstName,form.lastName);
 
   return (
     <div className={styles.page}>
 
-      {/* ── Toast ── */}
+      {/* Toast */}
       <AnimatePresence>
-        {toast && (
-          <motion.div className={`${styles.toast} ${toast.type==="ok" ? styles.toastOk : styles.toastErr}`}
-            initial={{opacity:0,y:-32,x:"-50%",scale:0.88}}
-            animate={{opacity:1,y:0,x:"-50%",scale:1}}
-            exit={{opacity:0,y:-16,x:"-50%",scale:0.92}}
-            transition={spring}>
-            <span className={styles.toastDot}/>
-            {toast.msg}
+        {toast&&(
+          <motion.div className={`${styles.toast} ${toast.type==="ok"?styles.toastOk:styles.toastErr}`}
+            initial={{opacity:0,y:-28,x:"-50%",scale:.9}} animate={{opacity:1,y:0,x:"-50%",scale:1}}
+            exit={{opacity:0,y:-16,x:"-50%"}} transition={sp}>
+            <span className={styles.toastDot}/>{toast.msg}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ════ HEADER ════ */}
-      <motion.div className={styles.header}
-        initial={{opacity:0,y:-18}} animate={{opacity:1,y:0}}
-        transition={{duration:0.5, ease:[0.22,1,0.36,1]}}>
-
-        <div className={styles.headerBg}/>
-
-        {/* Left: branding */}
-        <div className={styles.headerLeft}>
+      {/* ════ TOP NAV BAR — compact branding only ════ */}
+      <div className={styles.topBar}>
+        <div className={styles.topBarLeft}>
+          {/* Keep the @ icon */}
           <div className={styles.atBadge}>
             <span>@</span>
             <div className={styles.atBadgeRing}/>
           </div>
           <div>
-            <h1 className={styles.pageTitle}>Email Manager</h1>
-            <p className={styles.pageDomain}>{DOMAIN.slice(1)}</p>
+            <h1 className={styles.topBarTitle}>Email Manager</h1>
+            <p className={styles.topBarDomain}>{DOMAIN.slice(1)}</p>
           </div>
         </div>
-
-        {/* Center: stats */}
-        <div className={styles.statsRow}>
-          {stats.map((s,i) => (
-            <motion.button key={s.key}
-              className={`${styles.statChip} ${filterPanel===s.key ? styles.statChipActive : ""}`}
-              style={{"--sc": s.c}}
-              onClick={() => {
-                setFilterPanel(p => p===s.key ? null : s.key);
-                setMode("home");
-              }}
-              initial={{opacity:0,y:-12,scale:0.8}}
-              animate={{opacity:1,y:0,scale:1}}
-              transition={{delay:0.12+i*0.07, ...spring}}
-              whileHover={{y:-3}}
-              whileTap={{scale:0.94}}>
-
-              {/* Color dot */}
-              <div className={styles.statDot} style={{background:s.c}}/>
-
-              {/* Count */}
-              <motion.span className={styles.statN}
-                key={s.n}
-                initial={{opacity:0,y:-6}}
-                animate={{opacity:1,y:0}}
-                transition={spring}>
-                {s.n}
-              </motion.span>
-
-              <span className={styles.statL}>{s.l}</span>
-
-              {/* Active underline */}
-              {filterPanel===s.key && (
-                <motion.div className={styles.statActiveBar}
-                  layoutId="statBar"
-                  style={{background:s.c}}/>
-              )}
-            </motion.button>
-          ))}
-        </div>
-
-        {/* Right: new account btn */}
-        <motion.button className={styles.newBtn}
-          onClick={()=>{setMode("create");setCreateStep(1);setFilterPanel(null);}}
-          initial={{opacity:0,scale:0.8}} animate={{opacity:1,scale:1}} transition={{delay:0.25,...spring}}
-          whileHover={{scale:1.04,boxShadow:"0 8px 28px rgba(129,140,248,0.4)"}}
-          whileTap={{scale:0.96}}>
-          <motion.span className={styles.newBtnIcon}
-            whileHover={{rotate:90}} transition={{duration:0.2}}>
-            {I.plus}
-          </motion.span>
-          <span>New Account</span>
+        <motion.button className={styles.newAccBtn}
+          onClick={()=>{setMode("create");setCreateStep(1);setActiveRole(null);}}
+          whileHover={{scale:1.04}} whileTap={{scale:.96}}>
+          <span className={styles.newAccBtnIcon}>{I.plus}</span>
+          New Account
         </motion.button>
-      </motion.div>
+      </div>
 
-      {/* ════ SEARCH BAR ════ */}
-      <motion.div className={styles.searchSection}
-        initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:0.1,duration:0.4}}>
+      {/* ════ SPLIT LAYOUT ════ */}
+      <div className={styles.split}>
 
-        <div className={`${styles.searchWrap} ${
-          mode==="notfound" ? styles.searchErr :
-          mode==="found"    ? styles.searchOk  : ""
-        }`}>
-          <motion.span className={styles.searchIcon}
-            animate={{color: mode==="found"?"#22c55e":mode==="notfound"?"#ef4444":"var(--text-muted)"}}>
-            {I.search}
-          </motion.span>
-          <input ref={inputRef} className={styles.searchInput}
-            value={searchCode}
-            onChange={e=>{setSearchCode(e.target.value); if(mode!=="home"){setMode("home");setResult(null);}}}
-            onKeyDown={e=>e.key==="Enter"&&search()}
-            placeholder="Enter account code to search (e.g. 2203119)"
-            spellCheck={false} autoComplete="off"/>
-          <AnimatePresence>
-            {searchCode && (
-              <motion.button className={styles.clearBtn}
-                onClick={()=>{setSearchCode("");setMode("home");setResult(null);}}
-                initial={{opacity:0,scale:0.6}} animate={{opacity:1,scale:1}} exit={{opacity:0,scale:0.6}}
-                transition={spring}>
-                {I.close}
+        {/* ══ LEFT SIDEBAR ══ */}
+        <aside className={styles.sidebar}>
+
+          {/* Stat cards — 2×2 grid */}
+          <div className={styles.statsGrid}>
+            {stats.map((s,i)=>(
+              <motion.button key={s.key}
+                className={`${styles.statCard} ${activeRole===s.key?styles.statCardOn:""}`}
+                style={{background:activeRole===s.key?s.bg:undefined}}
+                onClick={()=>setActiveRole(p=>p===s.key?null:s.key)}
+                initial={{opacity:0,y:16}} animate={{opacity:1,y:0}}
+                transition={{delay:i*.06,...sp}}
+                whileHover={{y:-4,scale:1.04}} whileTap={{scale:.97}}>
+                <span className={styles.statCardN} style={activeRole===s.key?{color:"#fff"}:{color:s.c}}>{s.n}</span>
+                <span className={styles.statCardL} style={activeRole===s.key?{color:"rgba(255,255,255,.8)"}:{}}>{s.label}</span>
+                {activeRole===s.key&&<span className={styles.statCardCheck}>✓</span>}
               </motion.button>
-            )}
-          </AnimatePresence>
-          <motion.button className={styles.searchBtn}
-            onClick={search} whileHover={{scale:1.03}} whileTap={{scale:0.97}}>
-            Search
-          </motion.button>
-        </div>
+            ))}
+          </div>
 
-        <div className={styles.formatHints}>
-          {ROLES.map(r=>(
-            <span key={r.key} className={styles.hint}>
-              <span style={{color:r.color,fontWeight:800}}>{r.prefix}-</span>
-              <span>code·Name@domain</span>
-            </span>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* ════ FILTER PANEL (suspended / by role) ════ */}
-      <AnimatePresence>
-        {filterPanel && (
-          <motion.div className={styles.filterPanel}
-            initial={{opacity:0,y:-20,scale:0.97}}
-            animate={{opacity:1,y:0,scale:1}}
-            exit={{opacity:0,y:-14,scale:0.97}}
-            transition={springSmooth}>
-
-            {/* Panel header */}
-            <div className={styles.fpHeader}>
-              <div className={styles.fpHeaderLeft}>
-                {filterPanel==="suspended"
-                  ? <div className={styles.fpIconWrap} style={{background:"rgba(239,68,68,0.15)",color:"#ef4444"}}>{I.pause}</div>
-                  : <div className={styles.fpIconWrap} style={{background:"rgba(129,140,248,0.12)",color:"#818cf8"}}>{I.users}</div>
-                }
-                <div>
-                  <h2 className={styles.fpTitle}>
-                    {filterPanel==="suspended" ? "Suspended Accounts"
-                     : filterPanel==="students"    ? "Student Accounts"
-                     : filterPanel==="instructors" ? "Instructor Accounts"
-                     : "Admin Accounts"}
-                  </h2>
-                  <p className={styles.fpSub}>{panelAccounts.length} account{panelAccounts.length!==1?"s":""}</p>
-                </div>
-              </div>
-              <motion.button className={styles.fpClose}
-                onClick={()=>setFilterPanel(null)}
-                whileHover={{scale:1.1,rotate:90}} whileTap={{scale:0.9}}
-                transition={{duration:0.2}}>
-                {I.close}
-              </motion.button>
+          {/* Recent accounts mini list */}
+          <div className={styles.sideListWrap}>
+            {/* Sidebar search */}
+            <div className={styles.sideSearch}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" className={styles.sideSearchIco}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input className={styles.sideSearchInp}
+                value={sideSearch}
+                onChange={e=>setSideSearch(e.target.value)}
+                placeholder="Search name or code…"/>
+              {sideSearch&&<button className={styles.sideSearchClear} onClick={()=>setSideSearch("")}>✕</button>}
             </div>
-
-            {/* Account list */}
-            {panelAccounts.length===0 ? (
-              <div className={styles.fpEmpty}>
-                <div className={styles.fpEmptyIcon}>
-                  {filterPanel==="suspended" ? "🎉" : "👤"}
-                </div>
-                <p>{filterPanel==="suspended" ? "No suspended accounts!" : "No accounts found"}</p>
-              </div>
-            ) : (
-              <div className={styles.fpList}>
-                {panelAccounts.map((acc,i) => {
-                  const r = ROLES.find(x=>x.key===acc.role)||ROLES[0];
-                  const em = buildEmail(acc.role,acc.code,acc.firstName,acc.lastName);
-                  const copiedThis = copied===`panel-${acc.id}`;
-                  return (
-                    <motion.div key={acc.id} className={styles.fpItem}
-                      initial={{opacity:0,x:-24}}
-                      animate={{opacity:1,x:0}}
-                      transition={{delay:i*0.055,...spring}}
-                      layout>
-                      {/* Avatar */}
-                      <div className={styles.fpAvatar}
-                        style={{background:`linear-gradient(135deg,${r.dark},${r.color})`}}>
-                        {acc.firstName[0]}{acc.lastName[0]}
-                        {!acc.active && <div className={styles.fpAvatarBan}/>}
-                      </div>
-
-                      {/* Info */}
-                      <div className={styles.fpInfo}>
-                        <div className={styles.fpName}>{acc.firstName} {acc.lastName}</div>
-                        <div className={styles.fpMeta}>
-                          <span className={styles.fpRoleBadge} style={{color:r.color,background:`${r.color}18`}}>
-                            {r.icon} {r.label}
-                          </span>
-                          <span className={styles.fpCode}>#{acc.code}</span>
-                        </div>
-                        <div className={styles.fpEmail}>{em}</div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className={styles.fpActions}>
-                        {/* View profile */}
-                        <motion.button className={styles.fpViewBtn}
-                          onClick={()=>{
-                            setSearchCode(acc.code);
-                            setResult(acc);
-                            setMode("found");
-                            setFilterPanel(null);
-                          }}
-                          whileHover={{scale:1.04,y:-1}} whileTap={{scale:0.96}}
-                          title="View full profile"
-                          style={{"--vc": r.color}}>
-                          {I.eye}
-                          <span>View</span>
-                        </motion.button>
-
-                        {/* Copy email */}
-                        <motion.button className={`${styles.fpCopyBtn} ${copiedThis?styles.fpCopyDone:""}`}
-                          onClick={()=>copyText(em,`panel-${acc.id}`)}
-                          whileTap={{scale:0.88}} title="Copy email">
-                          <AnimatePresence mode="wait">
-                            {copiedThis
-                              ? <motion.span key="done" initial={{scale:0}} animate={{scale:1}} exit={{scale:0}} style={{color:"#22c55e"}}>{I.check}</motion.span>
-                              : <motion.span key="copy" initial={{scale:0}} animate={{scale:1}} exit={{scale:0}}>{I.copy}</motion.span>
-                            }
-                          </AnimatePresence>
-                        </motion.button>
-
-                        {/* Activate/Suspend toggle */}
-                        <motion.button
-                          className={`${styles.fpToggleBtn} ${acc.active ? styles.fpToggleSuspend : styles.fpToggleActivate}`}
-                          onClick={()=>toggle(acc)}
-                          whileHover={{scale:1.04}} whileTap={{scale:0.96}}>
-                          {acc.active ? <>{I.pause} Suspend</> : <>{I.play} Activate</>}
-                        </motion.button>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ════ MAIN CONTENT ════ */}
-      <div className={styles.contentArea}>
-        <AnimatePresence mode="wait">
-
-          {/* ── HOME ── */}
-          {mode==="home" && !filterPanel && (
-            <motion.div key="home" className={styles.homeState}
-              initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
-              transition={{duration:0.22}}>
-
-              {/* Clean envelope illustration */}
-              <div className={styles.homeIllus}>
-                <svg viewBox="0 0 120 88" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.homeIllusSvg}>
-                  {/* Shadow */}
-                  <ellipse cx="60" cy="84" rx="36" ry="4" fill="var(--border)" opacity="0.5"/>
-                  {/* Envelope body */}
-                  <rect x="8" y="16" width="104" height="64" rx="10" fill="var(--card-bg)" stroke="var(--border)" strokeWidth="2"/>
-                  {/* Envelope flap */}
-                  <path d="M8 26 L60 54 L112 26" stroke="var(--border)" strokeWidth="2" fill="none" strokeLinejoin="round"/>
-                  {/* Left fold */}
-                  <path d="M8 80 L42 52" stroke="var(--border)" strokeWidth="1.5" opacity="0.5"/>
-                  {/* Right fold */}
-                  <path d="M112 80 L78 52" stroke="var(--border)" strokeWidth="1.5" opacity="0.5"/>
-                  {/* @ badge on flap */}
-                  <circle cx="60" cy="38" r="14" fill="#818cf8"/>
-                  <text x="60" y="43" textAnchor="middle" fill="white" fontSize="14" fontWeight="900" fontFamily="monospace">@</text>
-                  {/* Role dots */}
-                  <circle cx="28" cy="70" r="5" fill="#818cf8" opacity="0.7"/>
-                  <circle cx="60" cy="74" r="4" fill="#22c55e" opacity="0.7"/>
-                  <circle cx="92" cy="70" r="5" fill="#f59e0b" opacity="0.7"/>
-                </svg>
-              </div>
-
-              <p className={styles.homeTitle}>Search an account</p>
-              <p className={styles.homeSub}>Enter a code above · or click a stat button to browse</p>
-              <div className={styles.homeSamples}>
-                {["2203119","INS001","ADM001","2203122"].map(c=>(
-                  <motion.button key={c} className={styles.sampleChip}
-                    onClick={()=>setSearchCode(c)}
-                    whileHover={{y:-2}} whileTap={{scale:0.96}}>
-                    {c}
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {/* ── NOT FOUND ── */}
-          {mode==="notfound" && (
-            <motion.div key="nf" className={styles.notFoundState}
-              initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} exit={{opacity:0}}
-              transition={{duration:0.32}}>
-              <motion.div className={styles.nfIcon}
-                animate={{rotate:[0,-10,10,-6,6,0]}}
-                transition={{duration:0.6,delay:0.1}}>
-                {I.warn}
-              </motion.div>
-              <p className={styles.nfTitle}>No account found for <strong>{searchCode}</strong></p>
-              <p className={styles.nfSub}>Would you like to create a new account with this code?</p>
-              <motion.button className={styles.nfCreateBtn}
-                onClick={()=>{setForm(p=>({...p,code:searchCode}));setMode("create");setCreateStep(2);setCreateRole("student");}}
-                whileHover={{scale:1.03,y:-2}} whileTap={{scale:0.97}}>
-                {I.plus} Create account for <strong>{searchCode}</strong>
-              </motion.button>
-            </motion.div>
-          )}
-
-          {/* ── FOUND ── */}
-          {mode==="found" && result && (
-            <motion.div key={`found-${result.id}`}
-              initial={{opacity:0,y:24,scale:0.96}} animate={{opacity:1,y:0,scale:1}}
-              exit={{opacity:0,y:-12,scale:0.97}}
-              transition={{duration:0.42,ease:[0.22,1,0.36,1]}}>
-
-              <div className={styles.profileCard}>
-                {/* Top gradient stripe */}
-                <div className={styles.profileStripe}
-                  style={{background:`linear-gradient(90deg,${roleData.color}60,${roleData.color}18,transparent)`}}/>
-
-                {/* Header row */}
-                <div className={styles.profileHeader}>
-                  <div className={styles.profileAvatarWrap}>
-                    <motion.div className={styles.profileAvatar}
-                      style={{background:`linear-gradient(135deg,${roleData.dark},${roleData.color})`}}
-                      whileHover={{scale:1.06}}>
-                      {result.firstName[0]}{result.lastName[0]}
-                    </motion.div>
-                    <motion.div className={styles.profileAvatarPing}
-                      style={{borderColor:`${roleData.color}40`}}
-                      animate={{scale:[1,1.5,1],opacity:[0.5,0,0.5]}}
-                      transition={{duration:2.5,repeat:Infinity,ease:"easeInOut"}}/>
-                    {!result.active && (
-                      <div className={styles.profileSuspendedOverlay}>
-                        <div className={styles.profileSuspendedIcon}>{I.pause}</div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className={styles.profileInfo}>
-                    <h2 className={styles.profileName}>{result.firstName} {result.lastName}</h2>
-                    <div className={styles.profileMeta}>
-                      <span className={styles.profileRoleBadge}
-                        style={{color:roleData.color, background:`${roleData.color}18`, borderColor:`${roleData.color}30`}}>
-                        {roleData.icon} {roleData.label}
-                      </span>
-                      <span className={styles.profileCode}>#{result.code}</span>
-                      <span className={styles.profileDate}>Created {result.createdAt}</span>
+            <div className={styles.sideListHead}>
+              <span>{activeRole ? stats.find(s=>s.key===activeRole)?.label||"Filtered" : "All Accounts"}</span>
+              <span className={styles.sideListCount}>{sideList.length}</span>
+            </div>
+            <div className={styles.sideList}>
+              {sideList.map((acc,i)=>{
+                const r=ROLES.find(x=>x.key===acc.role)||ROLES[0];
+                const isActive = result?.id===acc.id;
+                return (
+                  <motion.button key={acc.id}
+                    className={`${styles.sideItem} ${isActive?styles.sideItemActive:""}`}
+                    style={isActive?{borderColor:r.color,background:`${r.color}0f`}:{}}
+                    onClick={()=>{ setResult(acc); setMode("found"); setSearch(acc.code); setActiveTab("overview"); }}
+                    initial={{opacity:0,x:-14}} animate={{opacity:1,x:0}}
+                    transition={{delay:i*.04,...sp}}
+                    whileHover={{x:4}}>
+                    <div className={styles.sideItemAvatar} style={{background:r.bg}}>
+                      {acc.firstName[0]}{acc.lastName[0]}
+                      {!acc.active&&<div className={styles.sideItemBan}/>}
                     </div>
-                  </div>
-
-                  {/* Status pill */}
-                  <motion.button
-                    className={`${styles.statusPill} ${result.active ? styles.statusActive : styles.statusSuspended}`}
-                    onClick={()=>toggle(result)}
-                    whileHover={{scale:1.06}} whileTap={{scale:0.94}}>
-                    <motion.span className={styles.statusDot}
-                      animate={result.active ? {scale:[1,1.4,1],opacity:[1,0.5,1]} : {scale:1,opacity:0.6}}
-                      transition={{duration:1.6,repeat:result.active?Infinity:0}}/>
-                    {result.active ? "Active" : "Suspended"}
-                  </motion.button>
-                </div>
-
-                {/* Email block */}
-                <div className={styles.emailBlock}>
-                  <div className={styles.emailLabel}>EMAIL ADDRESS</div>
-                  <div className={styles.emailRow}>
-                    <div className={styles.emailDisplay}>
-                      <span className={styles.emailPrefix} style={{color:roleData.color}}>
-                        {email.split("@")[0]}
-                      </span>
-                      <span className={styles.emailAt} style={{color:roleData.color}}>@</span>
-                      <span className={styles.emailDomain}>akhbaracademy.edu.eg</span>
+                    <div className={styles.sideItemInfo}>
+                      <span className={styles.sideItemName}>{acc.firstName} {acc.lastName}</span>
+                      <span className={styles.sideItemCode} style={{color:r.color}}>#{acc.code}</span>
                     </div>
-                    <motion.button className={`${styles.copyBadge} ${copied===result.id?styles.copyBadgeDone:""}`}
-                      onClick={()=>copyText(email, result.id)}
-                      whileHover={{scale:1.04}} whileTap={{scale:0.9}}>
-                      <AnimatePresence mode="wait">
-                        {copied===result.id
-                          ? <motion.span key="y" initial={{scale:0}} animate={{scale:1}} exit={{scale:0}} style={{color:"#22c55e"}}>{I.check}</motion.span>
-                          : <motion.span key="n" initial={{scale:0}} animate={{scale:1}} exit={{scale:0}}>{I.copy}</motion.span>
-                        }
-                      </AnimatePresence>
-                      <span>{copied===result.id ? "Copied!" : "Copy"}</span>
-                    </motion.button>
-                  </div>
-                </div>
+                    <div className={styles.sideItemRole} style={{background:`${r.color}18`,color:r.color}}>{r.icon}</div>
+                  </motion.button>
+                );
+              })}
+              {sideList.length===0&&(
+                <div className={styles.sideEmpty}>No accounts</div>
+              )}
+            </div>
+          </div>
+        </aside>
 
-                {/* Action strip */}
-                <div className={styles.actionStrip}>
-                  <ActionTile icon={I.key} label="Change Password" color="#818cf8"
-                    onClick={()=>{setNewPwd(result.password);setMode("changepwd");}}/>
-                  <ActionTile
-                    icon={result.active ? I.pause : I.play}
-                    label={result.active ? "Suspend" : "Activate"}
-                    color={result.active ? "#f59e0b" : "#22c55e"}
-                    onClick={()=>toggle(result)}/>
-                  <ActionTile icon={I.trash} label="Delete Account" color="#ef4444" danger
-                    onClick={()=>setMode("confirmdelete")}/>
-                </div>
-              </div>
-            </motion.div>
-          )}
+        {/* ══ MAIN PANEL ══ */}
+        <main className={styles.main}>
 
-          {/* ── CHANGE PASSWORD ── */}
-          {mode==="changepwd" && result && (
-            <motion.div key="cpwd" className={styles.sheetCard}
-              initial={{opacity:0,y:24}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-12}}
-              transition={{duration:0.38,ease:[0.22,1,0.36,1]}}>
-
-              <button className={styles.backBtn} onClick={()=>setMode("found")}>{I.back} Back</button>
-
-              <div className={styles.sheetIcon} style={{background:"rgba(129,140,248,0.12)",color:"#818cf8"}}>
-                {I.key}
-              </div>
-              <h2 className={styles.sheetTitle}>Change Password</h2>
-              <p className={styles.sheetSub}>{result.firstName} {result.lastName} · <code className={styles.inlineCode}>{email}</code></p>
-
-              <div className={styles.pwdField}>
-                <input type={showPwd?"text":"password"} className={styles.pwdInput}
-                  value={newPwd} onChange={e=>setNewPwd(e.target.value)}
-                  placeholder="Enter new password" autoFocus/>
-                <button className={styles.pwdEye} onClick={()=>setShowPwd(p=>!p)}>
-                  {showPwd?I.eyeoff:I.eye}
+          {/* Search bar */}
+          <div className={styles.searchRow}>
+            <div className={`${styles.searchBox} ${mode==="found"?styles.searchOk:mode==="notfound"?styles.searchErr:""}`}>
+              <span className={styles.searchIco}>{I.search}</span>
+              <input ref={inputRef} className={styles.searchInp}
+                value={search} placeholder="Enter account code (e.g. 2203119)"
+                onChange={e=>{setSearch(e.target.value);if(mode!=="home"){setMode("home");setResult(null);}}}
+                onKeyDown={e=>e.key==="Enter"&&doSearch()} autoComplete="off" spellCheck={false}/>
+              {search&&(
+                <button className={styles.clearX} onClick={()=>{setSearch("");setMode("home");setResult(null);}}>
+                  {I.close}
                 </button>
-              </div>
+              )}
+            </div>
+            <motion.button className={styles.searchGoBtn} onClick={doSearch} whileHover={{scale:1.04}} whileTap={{scale:.96}}>
+              Search
+            </motion.button>
+          </div>
 
-              <motion.button className={styles.genBtn}
-                onClick={()=>setNewPwd(genPwd())} whileHover={{scale:1.02}} whileTap={{scale:0.97}}>
-                {I.spark} Generate strong password
-              </motion.button>
+          {/* Format hints */}
+          <div className={styles.fmtHints}>
+            {ROLES.map(r=>(
+              <span key={r.key} className={styles.fmtHint}>
+                <span style={{color:r.color,fontWeight:800}}>{r.prefix}-</span>
+                <span>code·Name@domain</span>
+              </span>
+            ))}
+          </div>
 
-              <AnimatePresence>
-                {newPwd && (
-                  <motion.div className={styles.pwdPreview}
-                    initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}}>
-                    <code className={styles.pwdPreviewCode}>{newPwd}</code>
-                    <button className={styles.pwdPreviewCopy}
-                      onClick={()=>copyText(newPwd,"preview")} title="Copy">
-                      {copied==="preview" ? I.check : I.copy}
-                    </button>
+          {/* Content area */}
+          <div className={styles.contentBox}>
+            <AnimatePresence mode="wait">
+
+              {/* ── HOME ── */}
+              {mode==="home"&&(
+                <motion.div key="home" className={styles.homePane}
+                  initial={{opacity:0,scale:.96}} animate={{opacity:1,scale:1}} exit={{opacity:0}}>
+                  <div className={styles.homeIllusWrap}>
+                    <svg viewBox="0 0 120 88" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.homeIllusSvg}>
+                      <ellipse cx="60" cy="84" rx="36" ry="4" fill="var(--border)" opacity="0.5"/>
+                      <rect x="8" y="16" width="104" height="64" rx="10" fill="var(--card-bg)" stroke="var(--border)" strokeWidth="2"/>
+                      <path d="M8 26 L60 54 L112 26" stroke="var(--border)" strokeWidth="2" fill="none" strokeLinejoin="round"/>
+                      <path d="M8 80 L42 52" stroke="var(--border)" strokeWidth="1.5" opacity="0.5"/>
+                      <path d="M112 80 L78 52" stroke="var(--border)" strokeWidth="1.5" opacity="0.5"/>
+                      <circle cx="60" cy="38" r="14" fill="#818cf8"/>
+                      <text x="60" y="43" textAnchor="middle" fill="white" fontSize="14" fontWeight="900" fontFamily="monospace">@</text>
+                      <circle cx="28" cy="70" r="5" fill="#818cf8" opacity="0.7"/>
+                      <circle cx="60" cy="74" r="4" fill="#22c55e" opacity="0.7"/>
+                      <circle cx="92" cy="70" r="5" fill="#f59e0b" opacity="0.7"/>
+                    </svg>
+                  </div>
+                  <h2 className={styles.homeTitle}>Search an account</h2>
+                  <p className={styles.homeSub}>Type a code above or click any account on the left sidebar</p>
+                  <div className={styles.homeSamples}>
+                    {["2203119","INS001","ADM001","2203122"].map(c=>(
+                      <button key={c} className={styles.sampleBtn} onClick={()=>setSearch(c)}>{c}</button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ── NOT FOUND ── */}
+              {mode==="notfound"&&(
+                <motion.div key="nf" className={styles.notFoundPane}
+                  initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} exit={{opacity:0}}>
+                  <motion.div className={styles.nfIconWrap}
+                    animate={{rotate:[0,-10,10,-5,5,0]}} transition={{duration:.6,delay:.1}}>
+                    {I.warn}
                   </motion.div>
-                )}
-              </AnimatePresence>
+                  <h3 className={styles.nfTitle}>No account found for <strong>"{search}"</strong></h3>
+                  <p className={styles.nfSub}>Would you like to create a new account with this code?</p>
+                  <motion.button className={styles.nfCreateBtn}
+                    onClick={()=>{setForm(p=>({...p,code:search}));setMode("create");setCreateStep(2);setCreateRole("student");}}
+                    whileHover={{scale:1.03,y:-2}} whileTap={{scale:.97}}>
+                    {I.plus} Create account for "{search}"
+                  </motion.button>
+                </motion.div>
+              )}
 
-              <div className={styles.sheetActions}>
-                <button className={styles.btnGhost} onClick={()=>setMode("found")}>Cancel</button>
-                <motion.button className={styles.btnPrimary}
-                  onClick={savePwd} disabled={!newPwd.trim()}
-                  style={{opacity:newPwd.trim()?1:0.4, background:"linear-gradient(135deg,#4338ca,#818cf8)"}}
-                  whileHover={newPwd.trim()?{scale:1.02}:{}} whileTap={newPwd.trim()?{scale:0.97}:{}}>
-                  Save Password
-                </motion.button>
-              </div>
-            </motion.div>
-          )}
+              {/* ── FOUND — NEW TAB-BASED LAYOUT ── */}
+              {mode==="found"&&result&&(
+                <motion.div key={`found-${result.id}`} className={styles.foundPane}
+                  initial={{opacity:0,x:24,scale:.97}} animate={{opacity:1,x:0,scale:1}}
+                  exit={{opacity:0,x:-16}} transition={{...sp}}>
 
-          {/* ── CONFIRM DELETE ── */}
-          {mode==="confirmdelete" && result && (
-            <motion.div key="cdel" className={styles.sheetCard}
-              initial={{opacity:0,y:24}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-12}}
-              transition={{duration:0.38,ease:[0.22,1,0.36,1]}}>
-
-              <button className={styles.backBtn} onClick={()=>setMode("found")}>{I.back} Back</button>
-
-              <motion.div className={styles.sheetIcon} style={{background:"rgba(239,68,68,0.12)",color:"#ef4444"}}
-                animate={{scale:[1,1.05,1]}} transition={{duration:1.5,repeat:Infinity}}>
-                {I.trash}
-              </motion.div>
-              <h2 className={styles.sheetTitle}>Delete Account?</h2>
-              <p className={styles.sheetSub}>This will permanently delete:</p>
-              <div className={styles.deleteBadge}><code>{email}</code></div>
-              <p className={styles.deleteWarn}>⚠ This action cannot be undone.</p>
-
-              <div className={styles.sheetActions}>
-                <button className={styles.btnGhost} onClick={()=>setMode("found")}>Cancel</button>
-                <motion.button className={styles.btnDanger}
-                  onClick={del} whileHover={{scale:1.02}} whileTap={{scale:0.97}}>
-                  Yes, Delete Account
-                </motion.button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ── CREATE ── */}
-          {mode==="create" && (
-            <motion.div key="create"
-              initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
-              transition={{duration:0.18}}>
-
-              <div className={styles.createWrap}>
-
-                {/* ── Left panel: steps sidebar ── */}
-                <div className={styles.createSidebar}>
-                  <button className={styles.backBtn}
-                    onClick={()=>createStep===2?setCreateStep(1):setMode("home")}>
-                    {I.back} {createStep===2?"Role":"Back"}
-                  </button>
-
-                  <div className={styles.createSideTitle}>New Account</div>
-
-                  {/* Vertical stepper */}
-                  <div className={styles.vStepper}>
-                    {[
-                      {n:1, label:"Account Type",  desc:"Student, Instructor or Admin"},
-                      {n:2, label:"Account Details",desc:"Code, name & password"},
-                    ].map((s,i) => {
-                      const active = createStep === s.n;
-                      const done   = createStep > s.n;
-                      const rc = ROLES.find(r=>r.key===createRole);
-                      return (
-                        <div key={s.n} className={styles.vStepItem}>
-                          {/* Connector line */}
-                          {i > 0 && (
-                            <div className={styles.vStepLine}>
-                              <div className={styles.vStepLineFill}
-                                style={{background: done||active ? rc?.color : "var(--border)",
-                                  height: done ? "100%" : active ? "50%" : "0%"}}/>
-                            </div>
-                          )}
-                          <div className={styles.vStepRow}>
-                            <div className={styles.vStepNum}
-                              style={active||done ? {background:rc?.color,borderColor:rc?.color,color:"#fff",boxShadow:`0 4px 14px ${rc?.color}44`} : {}}>
-                              {done ? <span style={{display:"flex"}}>{I.check}</span> : s.n}
-                            </div>
-                            <div className={styles.vStepText}>
-                              <div className={styles.vStepLabel} style={active?{color:"var(--text-primary)"}:{}}>{s.label}</div>
-                              <div className={styles.vStepDesc}>{s.desc}</div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                  {/* Account identity strip — solid colored */}
+                  <div className={styles.idStrip} style={{background:roleData.bg}}>
+                    <div className={styles.idStripAvatar}>
+                      {result.firstName[0]}{result.lastName[0]}
+                      {!result.active&&<div className={styles.idStripBan}/>}
+                    </div>
+                    <div className={styles.idStripInfo}>
+                      <span className={styles.idName}>{result.firstName} {result.lastName}</span>
+                      <span className={styles.idMeta}>
+                        {roleData.icon} {roleData.label} · #{result.code} · {result.createdAt}
+                      </span>
+                    </div>
+                    <div className={styles.idStripRight}>
+                      <button
+                        className={`${styles.idStatusBtn} ${result.active?styles.idStatusActive:styles.idStatusSuspended}`}
+                        onClick={()=>toggle(result)}>
+                        <span className={styles.idStatusDot}/>
+                        {result.active?"Active":"Suspended"}
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Selected role preview (step 2) */}
-                  {createStep===2 && (
-                    <div className={styles.createSideRole}>
-                      <div className={styles.createSideRoleIcon}
-                        style={{background:`${ROLES.find(r=>r.key===createRole)?.color}18`,
-                          border:`2px solid ${ROLES.find(r=>r.key===createRole)?.color}30`}}>
-                        {ROLES.find(r=>r.key===createRole)?.icon}
-                      </div>
-                      <div className={styles.createSideRoleName}
-                        style={{color:ROLES.find(r=>r.key===createRole)?.color}}>
-                        {ROLES.find(r=>r.key===createRole)?.label}
-                      </div>
-                      <div className={styles.createSideRolePrefix}>
-                        <code>{ROLES.find(r=>r.key===createRole)?.prefix}-</code>code·Name
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  {/* Tabs */}
+                  <div className={styles.tabsRow}>
+                    {[
+                      {k:"overview", label:"📧 Overview"},
+                      {k:"password", label:"🔑 Password"},
+                      {k:"danger",   label:"⚠️ Danger Zone"},
+                    ].map(t=>(
+                      <button key={t.k}
+                        className={`${styles.tab} ${activeTab===t.k?styles.tabOn:""}`}
+                        style={activeTab===t.k?{"--tc":t.k==="danger"?"#ef4444":roleData.color}:{}}
+                        onClick={()=>setActiveTab(t.k)}>
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
 
-                {/* ── Right panel: step content ── */}
-                <div className={styles.createContent}>
+                  {/* Tab content */}
                   <AnimatePresence mode="wait">
 
-                    {/* Step 1: Choose role */}
-                    {createStep===1 && (
-                      <motion.div key="s1"
-                        initial={{opacity:0,x:20}} animate={{opacity:1,x:0}} exit={{opacity:0,x:-16}}
-                        transition={{duration:0.22}}>
+                    {/* Overview tab */}
+                    {activeTab==="overview"&&(
+                      <motion.div key="ov" className={styles.tabContent}
+                        initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} exit={{opacity:0}}>
 
-                        <h2 className={styles.createTitle}>Choose Account Type</h2>
-                        <p className={styles.createSub}>Select the role for the new account</p>
+                        {/* Email card */}
+                        <div className={styles.emailCard}>
+                          <div className={styles.emailCardIcon} style={{background:roleData.bg}}>
+                            {I.mail}
+                          </div>
+                          <div className={styles.emailCardBody}>
+                            <div className={styles.emailCardLabel}>Email Address</div>
+                            <div className={styles.emailCardAddr}>
+                              <span style={{color:roleData.color,fontWeight:900}}>{email.split("@")[0]}</span>
+                              <span className={styles.emailCardAt}>@</span>
+                              <span className={styles.emailCardDomain}>akhbaracademy.edu.eg</span>
+                            </div>
+                          </div>
+                          <motion.button
+                            className={`${styles.copyEmailBtn} ${copied===result.id?styles.copyEmailBtnDone:""}`}
+                            style={copied===result.id?{}:{background:roleData.bg}}
+                            onClick={()=>copyText(email,result.id)}
+                            whileHover={{scale:1.06}} whileTap={{scale:.92}}>
+                            <AnimatePresence mode="wait">
+                              {copied===result.id
+                                ? <motion.span key="y" initial={{scale:0}} animate={{scale:1}} exit={{scale:0}}>{I.check}</motion.span>
+                                : <motion.span key="n" initial={{scale:0}} animate={{scale:1}} exit={{scale:0}}>{I.copy}</motion.span>
+                              }
+                            </AnimatePresence>
+                            <span>{copied===result.id?"Copied!":"Copy"}</span>
+                          </motion.button>
+                        </div>
 
-                        <div className={styles.roleGrid}>
-                          {ROLES.map(r => (
-                            <button key={r.key}
-                              className={`${styles.roleCard} ${createRole===r.key ? styles.roleCardOn : ""}`}
-                              style={{"--rc":r.color,"--rcd":r.dark}}
-                              onClick={()=>setCreateRole(r.key)}>
-
-                              {/* Selected bar */}
-                              <div className={styles.roleCardBar}
-                                style={{background: createRole===r.key ? r.color : "transparent"}}/>
-
-                              <div className={styles.roleCardIconWrap}
-                                style={{background:`${r.color}14`, border:`2px solid ${r.color}25`}}>
-                                <span className={styles.roleCardIcon}>{r.icon}</span>
-                              </div>
-                              <div className={styles.roleCardName}>{r.label}</div>
-                              <div className={styles.roleCardPrefix} style={{color:r.color}}>
-                                <code>{r.prefix}-</code>code·Name
-                              </div>
-
-                              {createRole===r.key && (
-                                <div className={styles.roleCheck} style={{background:r.color}}>
-                                  {I.check}
-                                </div>
-                              )}
-                            </button>
+                        {/* Info grid */}
+                        <div className={styles.infoGrid}>
+                          {[
+                            {l:"First Name", v:result.firstName},
+                            {l:"Last Name",  v:result.lastName},
+                            {l:"Code",       v:"#"+result.code, mono:true},
+                            {l:"Role",       v:roleData.label},
+                            {l:"Status",     v:result.active?"Active":"Suspended", c:result.active?"#22c55e":"#ef4444"},
+                            {l:"Created",    v:result.createdAt},
+                          ].map(item=>(
+                            <div key={item.l} className={styles.infoCell}>
+                              <span className={styles.infoCellLabel}>{item.l}</span>
+                              <span className={styles.infoCellVal} style={{color:item.c||"var(--text-primary)",fontFamily:item.mono?"monospace":undefined}}>
+                                {item.v}
+                              </span>
+                            </div>
                           ))}
                         </div>
 
-                        <motion.button className={styles.nextBtn}
-                          onClick={()=>setCreateStep(2)}
-                          style={{background:`linear-gradient(135deg,${ROLES.find(r=>r.key===createRole)?.dark},${ROLES.find(r=>r.key===createRole)?.color})`}}
-                          whileHover={{scale:1.02, filter:"brightness(1.08)"}}
-                          whileTap={{scale:0.97}}>
-                          Continue →
-                        </motion.button>
-                      </motion.div>
-                    )}
-
-                    {/* Step 2: Details */}
-                    {createStep===2 && (
-                      <motion.div key="s2"
-                        initial={{opacity:0,x:20}} animate={{opacity:1,x:0}} exit={{opacity:0,x:-16}}
-                        transition={{duration:0.22}}>
-
-                        <h2 className={styles.createTitle}>Account Details</h2>
-                        <p className={styles.createSub}>Fill in the information for the new account</p>
-
-                        {/* Live email preview */}
-                        <AnimatePresence>
-                          {previewEmail && (
-                            <motion.div className={styles.livePreview}
-                              initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}}
-                              exit={{opacity:0,height:0}}
-                              style={{borderColor:`${ROLES.find(r=>r.key===createRole)?.color}35`,
-                                background:`${ROLES.find(r=>r.key===createRole)?.color}08`}}>
-                              <div className={styles.lpLeft}>
-                                <span className={styles.lpLabel}>Email Preview</span>
-                                <span className={styles.lpEmail}
-                                  style={{color:ROLES.find(r=>r.key===createRole)?.color}}>
-                                  {previewEmail}
-                                </span>
-                              </div>
-                              <span className={styles.lpCheckIco} style={{color:ROLES.find(r=>r.key===createRole)?.color}}>
-                                {I.check}
-                              </span>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-
-                        <div className={styles.formGrid}>
-                          <CField label="Code" placeholder="e.g. 2203119" value={form.code}
-                            onChange={v=>setForm(p=>({...p,code:v}))} required
-                            accentColor={ROLES.find(r=>r.key===createRole)?.color}/>
-                          <div/>
-                          <CField label="First Name" placeholder="Ahmed" value={form.firstName}
-                            onChange={v=>setForm(p=>({...p,firstName:v}))} required
-                            accentColor={ROLES.find(r=>r.key===createRole)?.color}/>
-                          <CField label="Last Name" placeholder="Mohamed" value={form.lastName}
-                            onChange={v=>setForm(p=>({...p,lastName:v}))} required
-                            accentColor={ROLES.find(r=>r.key===createRole)?.color}/>
-                          <div className={styles.formFieldFull}>
-                            <div className={styles.formLabelRow}>
-                              <label className={styles.formLabel}>Password <span className={styles.req}>*</span></label>
-                              <button className={styles.genSmall} onClick={()=>setForm(p=>({...p,password:genPwd()}))}>
-                                {I.spark} Auto-generate
-                              </button>
-                            </div>
-                            <div className={styles.pwdField}
-                              style={form.password?{borderColor:`${ROLES.find(r=>r.key===createRole)?.color}55`}:{}}>
-                              <input type={showPwd?"text":"password"} className={styles.pwdInput}
-                                placeholder="Min 8 characters" value={form.password}
-                                onChange={e=>setForm(p=>({...p,password:e.target.value}))}/>
-                              <button className={styles.pwdEye} onClick={()=>setShowPwd(p=>!p)}>
-                                {showPwd?I.eyeoff:I.eye}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className={styles.createActions}>
-                          <button className={styles.btnGhost} onClick={()=>setMode("home")}>Cancel</button>
-                          <motion.button className={styles.btnCreate}
-                            onClick={create}
-                            disabled={!form.code||!form.firstName||!form.lastName||!form.password}
-                            style={{
-                              opacity:(form.code&&form.firstName&&form.lastName&&form.password)?1:0.38,
-                              background:`linear-gradient(135deg,${ROLES.find(r=>r.key===createRole)?.dark},${ROLES.find(r=>r.key===createRole)?.color})`
-                            }}
-                            whileHover={{scale:1.02}} whileTap={{scale:0.97}}>
-                            {I.plus} Create Account
+                        {/* Quick action row */}
+                        <div className={styles.quickActions}>
+                          <motion.button className={styles.qaBtn} style={{background:"linear-gradient(135deg,#f59e0b,#fbbf24)"}}
+                            onClick={()=>toggle(result)} whileHover={{scale:1.04,y:-2}} whileTap={{scale:.96}}>
+                            <span>{result.active?I.pause:I.play}</span>
+                            {result.active?"Suspend Account":"Activate Account"}
                           </motion.button>
                         </div>
                       </motion.div>
                     )}
+
+                    {/* Password tab */}
+                    {activeTab==="password"&&(
+                      <motion.div key="pw" className={styles.tabContent}
+                        initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} exit={{opacity:0}}>
+                        <div className={styles.pwdSection}>
+                          <h3 className={styles.pwdSectionTitle}>Change Password</h3>
+                          <p className={styles.pwdSectionSub}>Set a new password for {result.firstName} {result.lastName}</p>
+
+                          <div className={styles.pwdField} style={newPwd?{borderColor:`${roleData.color}60`}:{}}>
+                            <input type={showPwd?"text":"password"} className={styles.pwdInput}
+                              value={newPwd} onChange={e=>setNewPwd(e.target.value)}
+                              placeholder="Enter new password" autoFocus/>
+                            <button className={styles.pwdEye} onClick={()=>setShowPwd(p=>!p)}>
+                              {showPwd?I.eyeoff:I.eye}
+                            </button>
+                          </div>
+
+                          <motion.button className={styles.genBtn}
+                            onClick={()=>setNewPwd(genPwd())} whileHover={{scale:1.02}} whileTap={{scale:.97}}>
+                            {I.spark} Generate strong password
+                          </motion.button>
+
+                          <AnimatePresence>
+                            {newPwd&&(
+                              <motion.div className={styles.pwdPreview}
+                                initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}}>
+                                <code className={styles.pwdPreviewCode}>{newPwd}</code>
+                                <button className={styles.pwdPreviewCopy}
+                                  onClick={()=>copyText(newPwd,"preview")}>{copied==="preview"?I.check:I.copy}</button>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          <div className={styles.pwdActions}>
+                            <button className={styles.btnGhost} onClick={()=>setActiveTab("overview")}>Cancel</button>
+                            <motion.button className={styles.btnSave}
+                              style={{background:roleData.bg,opacity:newPwd.trim()?1:.4}}
+                              disabled={!newPwd.trim()}
+                              onClick={savePwd} whileHover={newPwd.trim()?{scale:1.02}:{}} whileTap={newPwd.trim()?{scale:.97}:{}}>
+                              Save Password
+                            </motion.button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* Danger tab */}
+                    {activeTab==="danger"&&(
+                      <motion.div key="dz" className={styles.tabContent}
+                        initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} exit={{opacity:0}}>
+                        <div className={styles.dangerZone}>
+                          <div className={styles.dangerHeader}>
+                            <div className={styles.dangerIcon}>{I.warn}</div>
+                            <div>
+                              <h3 className={styles.dangerTitle}>Danger Zone</h3>
+                              <p className={styles.dangerSub}>These actions cannot be undone</p>
+                            </div>
+                          </div>
+
+                          <div className={styles.dangerCard}>
+                            <div className={styles.dangerCardLeft}>
+                              <div className={styles.dangerCardTitle}>Delete Account</div>
+                              <div className={styles.dangerCardSub}>
+                                Permanently delete <strong>{buildEmail(result.role,result.code,result.firstName,result.lastName)}</strong> and all associated data.
+                              </div>
+                            </div>
+                            <motion.button className={styles.dangerDeleteBtn}
+                              onClick={del} whileHover={{scale:1.04}} whileTap={{scale:.96}}>
+                              {I.trash} Delete Account
+                            </motion.button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+
                   </AnimatePresence>
-                </div>
-              </div>
-            </motion.div>
-          )}
+                </motion.div>
+              )}
 
-        </AnimatePresence>
+              {/* ── CREATE ACCOUNT ── */}
+              {mode==="create"&&(
+                <motion.div key="create" className={styles.createPane}
+                  initial={{opacity:0,x:40,scale:.97}} animate={{opacity:1,x:0,scale:1}}
+                  exit={{opacity:0,x:-30,scale:.97}}
+                  transition={{type:"spring",stiffness:340,damping:30}}>
+
+                  <div className={styles.createWrap}>
+
+                    {/* Left: dark sidebar */}
+                    <div className={styles.createSidebar}>
+                      <button className={styles.sideBackBtn}
+                        onClick={()=>createStep===2?setCreateStep(1):setMode("home")}>
+                        {I.back} {createStep===2?"Role":"Back"}
+                      </button>
+
+                      <div className={styles.createSideTitle}>New Account</div>
+
+                      <div className={styles.vStepper}>
+                        {[{n:1,label:"Account Type",desc:"Student, Instructor or Admin"},{n:2,label:"Account Details",desc:"Code, name & password"}].map((s,i)=>{
+                          const on=createStep===s.n, done=createStep>s.n;
+                          const rc=ROLES.find(r=>r.key===createRole);
+                          return (
+                            <div key={s.n} className={styles.vStepItem}>
+                              {i>0&&<div className={styles.vStepLine}><div className={styles.vStepLineFill} style={{background:done||on?rc?.color:"rgba(255,255,255,.12)",height:done?"100%":on?"50%":"0%"}}/></div>}
+                              <div className={styles.vStepRow}>
+                                <div className={styles.vStepNum} style={on||done?{background:rc?.color,borderColor:rc?.color,color:"#fff",boxShadow:`0 4px 14px ${rc?.color}44`}:{}}>
+                                  {done?<span style={{display:"flex"}}>{I.check}</span>:s.n}
+                                </div>
+                                <div className={styles.vStepText}>
+                                  <div className={styles.vStepLabel} style={on?{color:"rgba(255,255,255,.95)"}:{}}>{s.label}</div>
+                                  <div className={styles.vStepDesc}>{s.desc}</div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {createStep===2&&(()=>{
+                        const rc=ROLES.find(r=>r.key===createRole);
+                        return (
+                          <div className={styles.createSideRole}>
+                            <div className={styles.createSideRoleIcon} style={{background:rc?.bg}}>{rc?.icon}</div>
+                            <div className={styles.createSideRoleName} style={{color:rc?.color}}>{rc?.label}</div>
+                            <div className={styles.createSideRolePrefix}><code>{rc?.prefix}-</code>code·Name</div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Right: content */}
+                    <div className={styles.createContent}>
+                      <AnimatePresence mode="wait">
+
+                        {/* Step 1 */}
+                        {createStep===1&&(
+                          <motion.div key="s1"
+                            initial={{opacity:0,x:24}} animate={{opacity:1,x:0}} exit={{opacity:0,x:-18}}
+                            transition={{type:"spring",stiffness:380,damping:28}}>
+                            <h2 className={styles.createTitle}>Choose Account Type</h2>
+                            <p className={styles.createSub}>Select the role for the new account</p>
+                            <div className={styles.roleGrid}>
+                              {ROLES.map((r,ri)=>{
+                                const on=createRole===r.key;
+                                return (
+                                  <motion.button key={r.key}
+                                    className={`${styles.roleCard} ${on?styles.roleCardOn:""}`}
+                                    style={on?{background:r.bg,borderColor:r.color,boxShadow:`0 12px 36px ${r.color}44`}:{"--rc":r.color}}
+                                    onClick={()=>setCreateRole(r.key)}
+                                    initial={{opacity:0,y:16}} animate={{opacity:1,y:0}}
+                                    transition={{delay:ri*.07,...sp}}
+                                    whileHover={{y:-6}} whileTap={{scale:.97}}>
+                                    <div className={styles.roleCardIconWrap}
+                                      style={on?{background:"rgba(255,255,255,.2)",border:"2px solid rgba(255,255,255,.35)"}:{background:`${r.color}16`,border:`2px solid ${r.color}28`}}>
+                                      <span className={styles.roleCardIcon}>{r.icon}</span>
+                                    </div>
+                                    <div className={styles.roleCardName} style={on?{color:"#fff"}:{}}>{r.label}</div>
+                                    <div className={styles.roleCardPrefix} style={on?{color:"rgba(255,255,255,.7)"}:{color:r.color}}>
+                                      <code>{r.prefix}-</code>code·Name
+                                    </div>
+                                    {on&&(
+                                      <motion.div className={styles.roleCheck}
+                                        initial={{scale:0}} animate={{scale:1}}
+                                        transition={{type:"spring",stiffness:500,damping:20}}>
+                                        {I.check}
+                                      </motion.div>
+                                    )}
+                                  </motion.button>
+                                );
+                              })}
+                            </div>
+                            <motion.button className={styles.nextBtn}
+                              style={{background:ROLES.find(r=>r.key===createRole)?.bg}}
+                              onClick={()=>setCreateStep(2)}
+                              whileHover={{scale:1.02,y:-2}} whileTap={{scale:.97}}>
+                              Continue → Select {ROLES.find(r=>r.key===createRole)?.label}
+                            </motion.button>
+                          </motion.div>
+                        )}
+
+                        {/* Step 2 */}
+                        {createStep===2&&(
+                          <motion.div key="s2"
+                            initial={{opacity:0,x:24}} animate={{opacity:1,x:0}} exit={{opacity:0,x:-18}}
+                            transition={{type:"spring",stiffness:380,damping:28}}>
+                            <h2 className={styles.createTitle}>Account Details</h2>
+                            <p className={styles.createSub}>Fill in the information for the new account</p>
+
+                            {prevEmail&&(
+                              <AnimatePresence>
+                                <motion.div className={styles.livePreview}
+                                  style={{borderColor:`${ROLES.find(r=>r.key===createRole)?.color}35`,background:`${ROLES.find(r=>r.key===createRole)?.color}08`}}
+                                  initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}}>
+                                  <div className={styles.lpLeft}>
+                                    <span className={styles.lpLabel}>Email Preview</span>
+                                    <span className={styles.lpEmail} style={{color:ROLES.find(r=>r.key===createRole)?.color}}>{prevEmail}</span>
+                                  </div>
+                                  <span style={{color:ROLES.find(r=>r.key===createRole)?.color,display:"flex"}}>{I.check}</span>
+                                </motion.div>
+                              </AnimatePresence>
+                            )}
+
+                            <div className={styles.formGrid}>
+                              <div className={styles.formField}>
+                                <label className={styles.formLabel}>Code <span className={styles.req}>*</span></label>
+                                <input className={styles.formInput} placeholder="e.g. 2203119" value={form.code} onChange={e=>setForm(p=>({...p,code:e.target.value}))} style={form.code?{borderColor:`${ROLES.find(r=>r.key===createRole)?.color}55`}:{}}/>
+                              </div>
+                              <div/>
+                              <div className={styles.formField}>
+                                <label className={styles.formLabel}>First Name <span className={styles.req}>*</span></label>
+                                <input className={styles.formInput} placeholder="Ahmed" value={form.firstName} onChange={e=>setForm(p=>({...p,firstName:e.target.value}))} style={form.firstName?{borderColor:`${ROLES.find(r=>r.key===createRole)?.color}55`}:{}}/>
+                              </div>
+                              <div className={styles.formField}>
+                                <label className={styles.formLabel}>Last Name <span className={styles.req}>*</span></label>
+                                <input className={styles.formInput} placeholder="Mohamed" value={form.lastName} onChange={e=>setForm(p=>({...p,lastName:e.target.value}))} style={form.lastName?{borderColor:`${ROLES.find(r=>r.key===createRole)?.color}55`}:{}}/>
+                              </div>
+                              <div className={styles.formFieldFull}>
+                                <div className={styles.formLabelRow}>
+                                  <label className={styles.formLabel}>Password <span className={styles.req}>*</span></label>
+                                  <button className={styles.genSmall} onClick={()=>setForm(p=>({...p,password:genPwd()}))}>{I.spark} Auto-generate</button>
+                                </div>
+                                <div className={styles.pwdField} style={form.password?{borderColor:`${ROLES.find(r=>r.key===createRole)?.color}55`}:{}}>
+                                  <input type={showPwd?"text":"password"} className={styles.pwdInput}
+                                    placeholder="Min 8 characters" value={form.password}
+                                    onChange={e=>setForm(p=>({...p,password:e.target.value}))}/>
+                                  <button className={styles.pwdEye} onClick={()=>setShowPwd(p=>!p)}>{showPwd?I.eyeoff:I.eye}</button>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className={styles.createActions}>
+                              <button className={styles.btnGhost} onClick={()=>setMode("home")}>Cancel</button>
+                              <motion.button className={styles.btnCreate}
+                                style={{background:ROLES.find(r=>r.key===createRole)?.bg,opacity:(form.code&&form.firstName&&form.lastName&&form.password)?1:.38}}
+                                disabled={!form.code||!form.firstName||!form.lastName||!form.password}
+                                onClick={create} whileHover={{scale:1.02}} whileTap={{scale:.97}}>
+                                {I.plus} Create Account
+                              </motion.button>
+                            </div>
+                          </motion.div>
+                        )}
+
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+            </AnimatePresence>
+          </div>
+        </main>
       </div>
-    </div>
-  );
-}
 
-function ActionTile({ icon, label, color, onClick, danger }) {
-  return (
-    <motion.button className={`${styles.actionTile} ${danger?styles.actionTileDanger:""}`}
-      style={{"--tc":color}}
-      onClick={onClick}
-      whileHover={{y:-4,background:`${color}14`}}
-      whileTap={{scale:0.95}}>
-      <span className={styles.actionTileIcon} style={{color}}>{icon}</span>
-      <span className={styles.actionTileLabel}>{label}</span>
-    </motion.button>
-  );
-}
-
-function CField({ label, placeholder, value, onChange, required, accentColor }) {
-  return (
-    <div className={styles.formField}>
-      <label className={styles.formLabel}>{label}{required&&<span className={styles.req}> *</span>}</label>
-      <input className={styles.formInput} placeholder={placeholder} value={value}
-        onChange={e=>onChange(e.target.value)}
-        style={value && accentColor ? {borderColor:`${accentColor}55`} : {}}/>
+      {/* Envelope animation overlay */}
+      <AnimatePresence>
+        {emailAnim&&(
+          <motion.div className={styles.envOverlay}
+            initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:.25}}>
+            <EnvelopeScene roleColor={ROLES.find(r=>r.key===createRole)?.color||"#818cf8"}/>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

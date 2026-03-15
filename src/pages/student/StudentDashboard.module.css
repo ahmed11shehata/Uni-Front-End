@@ -499,23 +499,41 @@
 .contactVal   { font-size: 12px; color: var(--text-secondary, #475569); }
 
 /* Map */
-.mapPlaceholder {
-  height: 240px;
-  background: linear-gradient(135deg, #e0f2fe, #dbeafe);
-  border-radius: 16px;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 6px; position: relative; overflow: hidden;
+.mapWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
-.mapPlaceholder p    { font-size: 15px; font-weight: 700; color: var(--text-primary, #0f172a); margin: 0; position: relative; z-index:1; }
-.mapPlaceholder span { font-size: 12px; color: var(--text-secondary, #475569); position: relative; z-index:1; }
-.mapPin { font-size: 42px; position: relative; z-index:1; }
-.mapGrid {
-  position: absolute; inset:0;
-  background-image: linear-gradient(rgba(15,27,76,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(15,27,76,0.06) 1px, transparent 1px);
-  background-size: 30px 30px;
+.mapFrame {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 2px solid var(--border, #e2e8f0);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+  height: 280px;
 }
+.mapIframe {
+  width: 100%; height: 100%;
+  border: none; display: block;
+  filter: saturate(0.85) contrast(1.1);
+}
+.mapRevealOverlay {
+  position: absolute; inset: 0;
+  background: var(--card-bg, #fff);
+  border-radius: 18px;
+  z-index: 2;
+  pointer-events: none;
+}
+.mapOpenBtn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 22px; border-radius: 12px;
+  background: linear-gradient(135deg, #4338ca, #818cf8);
+  color: #fff; font-size: 0.86rem; font-weight: 700;
+  text-decoration: none; font-family: "Sora", sans-serif;
+  box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+  transition: filter 0.18s; width: fit-content;
+}
+.mapOpenBtn:hover { filter: brightness(1.1); }
 
 /* ══ LAYOUT ═══════════════════════════════════════ */
 
